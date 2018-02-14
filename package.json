@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": false,
   "scripts": {
+    "assets": "gulp",
     "start": "node ./bin/www",
+    "dev": "npm run assets && npm run start",
     "restart": "pm2 startOrRestart ecosystem.config.js",
     "deploy": "pm2 deploy ecosystem.config.js production"
   },
