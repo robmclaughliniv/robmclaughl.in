@@ -11,7 +11,7 @@ module.exports = {
       ref: 'origin/master',
       repo: 'git@github.com:robmclaughliniv/robmclaughl.in.git',
       path: '/home/ubuntu/robmclaughlin',
-      'post-deploy': 'npm install && pm2 startOrRestart ecosystem.config.js'
+      'post-deploy': 'npm install && gulp && pm2 startOrRestart ecosystem.config.js'
     }
   }
 }

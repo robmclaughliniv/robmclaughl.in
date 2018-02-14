@@ -57,3 +57,8 @@ typings/
 # dotenv environment variables file
 .env
 
+# osx
+.DS_STORE
+
+#robmclaughl.in
+public
