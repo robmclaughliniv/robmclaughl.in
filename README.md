@@ -1,2 +1,0 @@
-# robmclaughl.in
-Personal site
