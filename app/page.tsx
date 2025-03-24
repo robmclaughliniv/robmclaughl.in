@@ -26,7 +26,7 @@ export default function Home() {
           </h1>
           <div className="flex items-center justify-center gap-2 text-zinc-400">
             <Music className="w-4 h-4 text-pink-500" />
-            <p className="text-lg md:text-xl font-mono">Senior Software Engineer</p>
+            <p className="text-lg md:text-xl font-mono">Engineering Manager</p>
             <Music className="w-4 h-4 text-pink-500" />
           </div>
           <div className="mt-4 w-24 h-1 bg-gradient-to-r from-transparent via-pink-500 to-transparent mx-auto"></div>
@@ -44,7 +44,7 @@ export default function Home() {
                   aria-label="GitHub"
                   asChild
                 >
-                  <a href="https://github.com/robmclaughlin" target="_blank" rel="noopener noreferrer">
+                  <a href="https://github.com/robmclaughliniv" target="_blank" rel="noopener noreferrer">
                     <Github className="w-7 h-7" />
                   </a>
                 </Button>
@@ -63,7 +63,7 @@ export default function Home() {
                   aria-label="LinkedIn"
                   asChild
                 >
-                  <a href="https://linkedin.com/in/robmclaughlin" target="_blank" rel="noopener noreferrer">
+                  <a href="https://linkedin.com/in/robertmclaughliniv" target="_blank" rel="noopener noreferrer">
                     <Linkedin className="w-7 h-7" />
                   </a>
                 </Button>
@@ -82,7 +82,7 @@ export default function Home() {
                   aria-label="Email"
                   asChild
                 >
-                  <a href="mailto:rob@example.com">
+                  <a href="mailto:robmclaughliniv@gmail.com">
                     <Mail className="w-7 h-7" />
                   </a>
                 </Button>
@@ -97,13 +97,12 @@ export default function Home() {
         {/* Bio section */}
         <div className="bg-zinc-900/50 backdrop-blur-sm p-6 rounded-lg border border-zinc-800 mb-12 max-w-md">
           <p className="text-zinc-300 leading-relaxed">
-            Building elegant solutions to complex problems. Passionate about web technologies, performance optimization,
-            and creating seamless user experiences.
+            Engineer, problem-solver, and dad.<br />Based in Austin,TX.
           </p>
         </div>
 
         {/* Footer */}
-        <footer className="text-zinc-500 text-sm font-mono mt-auto">
+        <footer className="text-zinc-500 text-sm font-mono mt-auto fixed bottom-10">
           <p>© {new Date().getFullYear()} Rob McLaughlin</p>
         </footer>
       </div>

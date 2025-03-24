@@ -14,7 +14,7 @@ The target audience includes fellow developers, recruiters, and the tech communi
 
 The site should quickly communicate who Rob is and how to reach him. It's essentially a digital business card with style. A minimalist content approach will list:
 - Rob's name
-- A brief tagline or title (e.g. "Senior Software Engineer")
+- A brief tagline or title (e.g. "Engineering Manager")
 - Icons/links to his LinkedIn, GitHub, email, etc.
 
 This ensures anyone visiting (peers, employers, collaborators) can learn the basics at a glance. The lo-fi visual theme adds personality, making the site memorable and reflective of Rob's interests, while still keeping it professional and accessible.

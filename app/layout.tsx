@@ -25,8 +25,8 @@ const pressStart2P = Press_Start_2P({
 })
 
 export const metadata: Metadata = {
-  title: "Rob McLaughlin | Senior Software Engineer",
-  description: "Personal website of Rob McLaughlin, Senior Software Engineer",
+  title: "Rob McLaughlin | Engineering Manager",
+  description: "Personal website of Rob McLaughlin, Engineering Manager",
     generator: 'v0.dev'
 }
 
