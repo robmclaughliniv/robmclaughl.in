@@ -34,6 +34,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: us-west-2
           role-session-name: rob-site-deploy
+          mask-aws-account-id: false  # Helps with debugging
 
       - name: Deploy to S3
         run: |
