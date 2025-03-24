@@ -1,6 +1,25 @@
 # Main Terraform configuration file for robmclaughl.in
 provider "aws" {
+  region = "us-west-2"
+  
+  # Credentials are loaded from AWS CLI configuration
+  
+  # You can specify default tags to add to all resources
+  default_tags {
+    tags = {
+      Project     = "robmclaughl.in"
+      Environment = "production"
+      ManagedBy   = "terraform"
+    }
+  }
+}
+
+# CloudFront requires ACM certificates to be in us-east-1 region
+provider "aws" {
+  alias  = "us_east_1"
   region = "us-east-1"
+  
+  # Credentials are loaded from AWS CLI configuration
   
   # You can specify default tags to add to all resources
   default_tags {
@@ -17,7 +36,7 @@ provider "aws" {
 #   backend "s3" {
 #     bucket         = "robmclaughl-in-terraform-state"
 #     key            = "terraform.tfstate"
-#     region         = "us-east-1"
+#     region         = "us-west-2"
 #     dynamodb_table = "terraform-locks"
 #     encrypt        = true
 #   }
@@ -35,6 +54,10 @@ module "acm" {
   domain_name = "robmclaughl.in"
   subject_alternative_names = ["www.robmclaughl.in"]
   zone_id = module.route53.zone_id
+  
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
 }
 
 # CloudFront Distribution
@@ -62,6 +85,8 @@ module "github_actions" {
   bucket_arn = module.website_bucket.bucket_arn
   cloudfront_distribution_arn = module.cloudfront.distribution_arn
   cloudfront_distribution_id = module.cloudfront.distribution_id
+  github_owner = "robmclaughliniv" # Update with your actual GitHub username
+  github_repo = "robmclaughl.in" # Update with your actual repository name
 }
 
 # Output values

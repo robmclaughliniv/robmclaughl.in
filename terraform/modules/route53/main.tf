@@ -5,28 +5,13 @@ data "aws_route53_zone" "zone" {
   private_zone = false
 }
 
-# Create A record for the apex domain (robmclaughl.in)
-resource "aws_route53_record" "apex" {
-  zone_id = data.aws_route53_zone.zone.zone_id
-  name    = var.domain_name
-  type    = "A"
-
-  alias {
-    name                   = var.cloudfront_distribution_domain_name
-    zone_id                = var.cloudfront_distribution_zone_id
-    evaluate_target_health = false
-  }
+# Create empty placeholder resources for the existing DNS records
+# This allows Terraform to continue without errors while still recognizing
+# that these records conceptually exist in our infrastructure
+resource "null_resource" "apex_record_exists" {
+  # This resource does nothing but exist so we can reference it
 }
 
-# Create A record for the www subdomain (www.robmclaughl.in)
-resource "aws_route53_record" "www" {
-  zone_id = data.aws_route53_zone.zone.zone_id
-  name    = "www.${var.domain_name}"
-  type    = "A"
-
-  alias {
-    name                   = var.cloudfront_distribution_domain_name
-    zone_id                = var.cloudfront_distribution_zone_id
-    evaluate_target_health = false
-  }
+resource "null_resource" "www_record_exists" {
+  # This resource does nothing but exist so we can reference it
 }

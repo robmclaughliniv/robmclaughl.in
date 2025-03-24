@@ -17,3 +17,15 @@ variable "cloudfront_distribution_id" {
   description = "ID of the CloudFront distribution"
   type        = string
 }
+
+variable "github_owner" {
+  description = "Owner of the GitHub repository"
+  type        = string
+  default     = "robmclaughliniv" # Replace with your GitHub username or organization
+}
+
+variable "github_repo" {
+  description = "Name of the GitHub repository"
+  type        = string
+  default     = "robmclaughl.in" # The repository name
+}
