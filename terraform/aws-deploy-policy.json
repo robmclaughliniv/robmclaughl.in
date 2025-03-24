@@ -27,7 +27,7 @@
         "cloudfront:CreateInvalidation",
         "cloudfront:GetInvalidation"
       ],
-      "Resource": "arn:aws:cloudfront::{AWS_ACCOUNT_ID}:distribution/{CLOUDFRONT_DISTRIBUTION_ID}"
+      "Resource": "arn:aws:cloudfront::964943862554:distribution/E10Q7ITL1GWT4O"
     }
   ]
 }
