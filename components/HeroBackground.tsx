@@ -231,7 +231,7 @@ export function HeroBackground({
       )}
       
       {/* Content container */}
-      <div className={cn("relative z-10 w-full h-full", className)}>
+      <div className={cn("relative z-10 w-full h-full flex items-center justify-center", className)}>
         {children}
       </div>
     </div>
