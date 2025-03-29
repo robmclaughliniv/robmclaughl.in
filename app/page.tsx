@@ -1,13 +1,26 @@
+'use client';
+
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Github, Linkedin, Mail, Music } from "lucide-react"
 import { Waveform } from "@/components/waveform"
 import { HeroBackground } from "@/components/HeroBackground"
+import { useEffect } from "react"
 
 export default function Home() {
+  // Force reflow to ensure animations restart
+  useEffect(() => {
+    const screen = document.querySelector('.crt-screen');
+    if (screen) {
+      screen.classList.remove('crt-screen');
+      void screen.offsetWidth;
+      screen.classList.add('crt-screen');
+    }
+  }, []);
+
   return (
-    <main className="relative min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
-      {/* Hero Background */}
+    <main className="relative min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden crt-screen">
+      {/* Hero Background with CRT effect */}
       <HeroBackground 
         videoSrc="/videos/bg-sand.mp4" 
         mobileBackgroundImage="/placeholder.jpg"

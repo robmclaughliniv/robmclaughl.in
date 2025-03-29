@@ -27,7 +27,7 @@ const pressStart2P = Press_Start_2P({
 export const metadata: Metadata = {
   title: "Rob McLaughlin | Engineering Manager",
   description: "Personal website of Rob McLaughlin, Engineering Manager",
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -47,7 +47,3 @@ export default function RootLayout({
     </html>
   )
 }
-
-
-
-import './globals.css'

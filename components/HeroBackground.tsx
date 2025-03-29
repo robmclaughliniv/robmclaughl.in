@@ -214,15 +214,14 @@ export function HeroBackground({
             aria-hidden="true"
           />
           
-          {/* CRT scanline effect */}
+          {/* CRT vignette effect */}
           <div 
             className={cn(
-              "absolute inset-0 z-[3] pointer-events-none transition-opacity duration-2000 ease-in-out",
+              "absolute inset-0 z-[3] pointer-events-none",
               isVisible ? "opacity-100" : "opacity-0"
             )}
             style={{
-              backgroundImage: 'linear-gradient(transparent 50%, rgba(0, 0, 0, 0.05) 50%)',
-              backgroundSize: '100% 4px',
+              boxShadow: "0 0 150px rgba(0, 0, 0, 0.9) inset",
               transitionDelay: '400ms',
             }}
             aria-hidden="true"
