@@ -180,7 +180,7 @@ export function HeroBackground({
   return (
     <div 
       ref={containerRef}
-      className="fixed inset-0 w-full h-screen overflow-hidden"
+      className="fixed inset-0 w-full h-screen overflow-hidden crt-screen"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       data-testid="hero-background"
@@ -221,7 +221,7 @@ export function HeroBackground({
               isVisible ? "opacity-100" : "opacity-0"
             )}
             style={{
-              boxShadow: "0 0 150px rgba(0, 0, 0, 0.9) inset",
+              boxShadow: "0 0 150px rgba(0, 0, 0, .01) inset",
               transitionDelay: '400ms',
             }}
             aria-hidden="true"
@@ -229,8 +229,8 @@ export function HeroBackground({
         </>
       )}
       
-      {/* Content container */}
-      <div className={cn("relative z-10 w-full h-full flex items-center justify-center", className)}>
+      {/* Content container - higher z-index than scanlines */}
+      <div className={cn("relative z-50 w-full h-full flex items-center justify-center", className)}>
         {children}
       </div>
     </div>
