@@ -53,7 +53,7 @@ export default function Home() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
+                    className="box-flicker w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
                     aria-label="GitHub"
                     asChild
                   >
@@ -72,7 +72,7 @@ export default function Home() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
+                    className="box-flicker w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
                     aria-label="LinkedIn"
                     asChild
                   >
@@ -91,7 +91,7 @@ export default function Home() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
+                    className="box-flicker w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
                     aria-label="Email"
                     asChild
                   >
@@ -108,14 +108,14 @@ export default function Home() {
           </TooltipProvider>
 
           {/* Bio section */}
-          <div className="bg-zinc-900/50 backdrop-blur-sm p-6 rounded-lg border border-zinc-800 mb-12 max-w-md shadow-xl drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)]">
+          <div className="box-flicker bg-zinc-900/50 backdrop-blur-sm p-6 rounded-lg border border-zinc-800 mb-12 max-w-md shadow-xl drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)]">
             <p className="text-zinc-300 leading-relaxed font-medium">
               Engineer, problem-solver, and dad.<br />Based in Austin, TX.
             </p>
           </div>
 
           {/* Footer */}
-          <footer className="text-zinc-500 text-sm font-mono mt-12">
+          <footer className="text-flicker text-zinc-500 text-sm font-mono mt-12">
             <p>© {new Date().getFullYear()} Rob McLaughlin</p>
           </footer>
         </div>
