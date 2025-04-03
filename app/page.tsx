@@ -1,13 +1,27 @@
+'use client';
+
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Github, Linkedin, Mail, Music } from "lucide-react"
 import { Waveform } from "@/components/waveform"
 import { HeroBackground } from "@/components/HeroBackground"
+import { useEffect } from "react"
 
 export default function Home() {
+  // Force reflow to ensure animations restart on mount
+  useEffect(() => {
+    const screen = document.querySelector('.crt-screen');
+    if (screen) {
+      // Reset animation by briefly removing class
+      screen.classList.remove('crt-screen');
+      void screen.offsetWidth;
+      screen.classList.add('crt-screen');
+    }
+  }, []);
+
   return (
-    <main className="relative min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
-      {/* Hero Background */}
+    <main className="crt-flicker relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
+      {/* Hero Background with CRT effect */}
       <HeroBackground 
         videoSrc="/videos/bg-sand.mp4" 
         mobileBackgroundImage="/placeholder.jpg"
@@ -20,12 +34,12 @@ export default function Home() {
 
           {/* Header section with pixelated font and neon glow */}
           <header className="mb-8">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-pixel tracking-tight mb-4 text-white neon-text leading-normal drop-shadow-[0_0_15px_rgba(236,72,153,0.5)]">
+            <h1 className="text-flicker text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-pixel tracking-tight mb-4 text-white neon-text leading-normal drop-shadow-[0_0_15px_rgba(236,72,153,0.5)]">
               Rob McLaughlin
             </h1>
             <div className="flex items-center justify-center gap-2 text-zinc-400">
               <Music className="w-4 h-4 text-pink-500" />
-              <p className="text-lg md:text-xl font-mono drop-shadow-lg">Engineering Manager</p>
+              <p className="text-flicker text-lg md:text-xl font-mono drop-shadow-lg">Engineering Manager</p>
               <Music className="w-4 h-4 text-pink-500" />
             </div>
             <div className="mt-4 w-24 h-1 bg-gradient-to-r from-transparent via-pink-500 to-transparent mx-auto drop-shadow-xl"></div>

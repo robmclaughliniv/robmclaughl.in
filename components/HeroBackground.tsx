@@ -180,7 +180,7 @@ export function HeroBackground({
   return (
     <div 
       ref={containerRef}
-      className="fixed inset-0 w-full h-screen overflow-hidden"
+      className="fixed inset-0 w-full h-screen overflow-hidden crt-screen"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       data-testid="hero-background"
@@ -214,15 +214,14 @@ export function HeroBackground({
             aria-hidden="true"
           />
           
-          {/* CRT scanline effect */}
+          {/* CRT vignette effect */}
           <div 
             className={cn(
-              "absolute inset-0 z-[3] pointer-events-none transition-opacity duration-2000 ease-in-out",
+              "absolute inset-0 z-[3] pointer-events-none",
               isVisible ? "opacity-100" : "opacity-0"
             )}
             style={{
-              backgroundImage: 'linear-gradient(transparent 50%, rgba(0, 0, 0, 0.05) 50%)',
-              backgroundSize: '100% 4px',
+              boxShadow: "0 0 150px rgba(0, 0, 0, .01) inset",
               transitionDelay: '400ms',
             }}
             aria-hidden="true"
@@ -230,8 +229,8 @@ export function HeroBackground({
         </>
       )}
       
-      {/* Content container */}
-      <div className={cn("relative z-10 w-full h-full flex items-center justify-center", className)}>
+      {/* Content container - higher z-index than scanlines */}
+      <div className={cn("relative z-50 w-full h-full flex items-center justify-center", className)}>
         {children}
       </div>
     </div>
