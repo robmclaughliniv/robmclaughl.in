@@ -31,21 +31,32 @@ provider "aws" {
   }
 }
 
-# Backend configuration for Terraform state (uncomment and configure as needed)
-# terraform {
-#   backend "s3" {
-#     bucket         = "robmclaughl-in-terraform-state"
-#     key            = "terraform.tfstate"
-#     region         = "us-west-2"
-#     dynamodb_table = "terraform-locks"
-#     encrypt        = true
-#   }
-# }
+# Backend configuration for Terraform state
+terraform {
+  backend "s3" {
+    bucket         = "robmclaughl-in-terraform-state"
+    key            = "terraform.tfstate"
+    region         = "us-west-2"
+    dynamodb_table = "terraform-locks"
+    encrypt        = true
+  }
+}
 
 # S3 bucket for website content
 module "website_bucket" {
   source = "./modules/s3"
   bucket_name = "robmclaughl-in-website-bucket"
+  cloudfront_distribution_arn = module.cloudfront.distribution_arn
+  
+  # Note: This creates a circular dependency, so we need to use depends_on
+  depends_on = [module.cloudfront]
+}
+
+# S3 bucket for CloudFront logs
+module "logs_bucket" {
+  source = "./modules/s3"
+  bucket_name = "robmclaughl-in-logs-bucket"
+  cloudfront_distribution_arn = module.cloudfront.distribution_arn
 }
 
 # ACM Certificate
@@ -68,6 +79,8 @@ module "cloudfront" {
   bucket_arn = module.website_bucket.bucket_arn
   acm_certificate_arn = module.acm.certificate_arn
   domain_names = ["robmclaughl.in", "www.robmclaughl.in"]
+  logs_bucket = module.logs_bucket.bucket_name
+  logs_prefix = "cloudfront-logs/"
 }
 
 # Route53 configuration

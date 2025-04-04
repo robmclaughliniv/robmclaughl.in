@@ -36,3 +36,29 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "website" {
     }
   }
 }
+
+# Policy document that allows CloudFront OAC to access the S3 bucket
+data "aws_iam_policy_document" "s3_policy_oac" {
+  statement {
+    sid       = "AllowCloudFrontOAC"
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.website.arn}/*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values   = [var.cloudfront_distribution_arn]
+    }
+  }
+}
+
+# Attach the policy to the S3 bucket
+resource "aws_s3_bucket_policy" "bucket_policy_oac" {
+  bucket = aws_s3_bucket.website.id
+  policy = data.aws_iam_policy_document.s3_policy_oac.json
+}

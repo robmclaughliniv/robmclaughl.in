@@ -22,3 +22,15 @@ variable "domain_names" {
   description = "Domain names for the CloudFront distribution"
   type        = list(string)
 }
+
+variable "logs_bucket" {
+  description = "Name of the S3 bucket for CloudFront logs"
+  type        = string
+  default     = ""
+}
+
+variable "logs_prefix" {
+  description = "Prefix for CloudFront logs in the logs bucket"
+  type        = string
+  default     = "cloudfront-logs/"
+}

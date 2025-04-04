@@ -52,9 +52,8 @@ This policy grants only the minimal permissions needed:
 ### S3 Permissions
 - `s3:ListBucket` - Allows listing objects in the bucket (needed for sync operation)
 - `s3:PutObject` - Allows uploading files to the bucket
-- `s3:GetObject` - Allows reading files from the bucket
+- `s3:GetObject` - Allows reading files from the bucket (needed for sync checks)
 - `s3:DeleteObject` - Allows deleting files (needed for sync --delete)
-- `s3:PutObjectAcl` - Allows setting ACLs (needed for --acl private flag)
 
 ### CloudFront Permissions
 - `cloudfront:CreateInvalidation` - Allows creating cache invalidations

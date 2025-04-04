@@ -1,46 +1,63 @@
-# Create an Origin Access Identity (OAI) for CloudFront
-resource "aws_cloudfront_origin_access_identity" "oai" {
-  comment = "OAI for ${var.bucket_name}"
-}
-
-# Policy document that allows CloudFront to access the S3 bucket
-data "aws_iam_policy_document" "s3_policy" {
-  statement {
-    actions   = ["s3:GetObject"]
-    resources = ["${var.bucket_arn}/*"]
-
-    principals {
-      type        = "AWS"
-      identifiers = [aws_cloudfront_origin_access_identity.oai.iam_arn]
+# Create a Response Headers Policy for security headers
+resource "aws_cloudfront_response_headers_policy" "security_headers" {
+  name = "security-headers-policy"
+  
+  security_headers_config {
+    # Strict Transport Security: Enforce HTTPS
+    strict_transport_security {
+      access_control_max_age_sec = 31536000 # 1 year
+      include_subdomains         = true
+      preload                    = true
+      override                   = true
+    }
+    
+    # Content-Security-Policy: Restrict sources of content
+    content_security_policy {
+      content_security_policy = "default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; media-src 'self'; object-src 'none'; frame-src 'none';"
+      override                = true
+    }
+    
+    # X-Content-Type-Options: Prevent MIME type sniffing
+    content_type_options {
+      override = true
+    }
+    
+    # X-Frame-Options: Prevent clickjacking
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+    
+    # Referrer-Policy: Control referrer information
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+    
+    # X-XSS-Protection: Legacy XSS protection for older browsers
+    xss_protection {
+      mode_block = true
+      protection = true
+      override   = true
     }
   }
-
-  statement {
-    actions   = ["s3:ListBucket"]
-    resources = [var.bucket_arn]
-
-    principals {
-      type        = "AWS"
-      identifiers = [aws_cloudfront_origin_access_identity.oai.iam_arn]
-    }
-  }
 }
 
-# Attach the policy to the S3 bucket
-resource "aws_s3_bucket_policy" "bucket_policy" {
-  bucket = var.bucket_name
-  policy = data.aws_iam_policy_document.s3_policy.json
+# Create an Origin Access Control (OAC) for CloudFront S3 origins
+resource "aws_cloudfront_origin_access_control" "oac" {
+  name                              = "${var.bucket_name}-oac"
+  description                       = "OAC for ${var.bucket_name}"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
 }
 
 # CloudFront distribution
 resource "aws_cloudfront_distribution" "website" {
   origin {
-    domain_name = var.bucket_regional_domain_name
-    origin_id   = "S3-${var.bucket_name}"
-
-    s3_origin_config {
-      origin_access_identity = aws_cloudfront_origin_access_identity.oai.cloudfront_access_identity_path
-    }
+    domain_name              = var.bucket_regional_domain_name
+    origin_id                = "S3-${var.bucket_name}"
+    origin_access_control_id = aws_cloudfront_origin_access_control.oac.id # Use OAC instead of OAI
   }
 
   enabled             = true
@@ -66,6 +83,9 @@ resource "aws_cloudfront_distribution" "website" {
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
+    
+    # Apply the security headers policy
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
   }
 
   # Handle 404 errors with custom error response
@@ -89,11 +109,13 @@ resource "aws_cloudfront_distribution" "website" {
     }
   }
 
-  # Optional logging configuration
-  # Uncomment and configure as needed
-  # logging_config {
-  #   include_cookies = false
-  #   bucket          = "robmclaughl-in-logs.s3.amazonaws.com"
-  #   prefix          = "cloudfront-logs/"
-  # }
+  # Logging configuration
+  dynamic "logging_config" {
+    for_each = var.logs_bucket != "" ? [1] : []
+    content {
+      include_cookies = false
+      bucket          = "${var.logs_bucket}.s3.amazonaws.com"
+      prefix          = var.logs_prefix
+    }
+  }
 }

@@ -4,11 +4,12 @@ This directory contains the Terraform configuration for deploying the robmclaugh
 
 ## Infrastructure Components
 
-- **S3 Bucket**: Stores the static website files
-- **CloudFront Distribution**: CDN for serving the website with HTTPS
+- **S3 Bucket**: Stores the static website files (with public access blocked)
+- **CloudFront Distribution**: CDN for serving the website with HTTPS, security headers, and access logging
 - **ACM Certificate**: SSL/TLS certificate for HTTPS
 - **Route53 Records**: DNS configuration for the domain
-- **IAM Role for GitHub Actions**: Allows CI/CD pipeline to deploy the website
+- **IAM Role for GitHub Actions**: Allows CI/CD pipeline to deploy the website with least privilege permissions
+- **S3 Backend**: Stores Terraform state with DynamoDB locking
 
 ## Prerequisites
 
@@ -19,10 +20,12 @@ This directory contains the Terraform configuration for deploying the robmclaugh
 
 ## Usage
 
-1. Initialize Terraform:
+1. Initialize Terraform with the S3 backend:
    ```
    terraform init
    ```
+
+   Note: The S3 backend bucket and DynamoDB table must exist before running this command.
 
 2. Preview the changes:
    ```
@@ -42,9 +45,12 @@ This directory contains the Terraform configuration for deploying the robmclaugh
 ## Important Notes
 
 - The S3 bucket is configured with `prevent_destroy = true` to prevent accidental deletion
-- The CloudFront distribution uses Origin Access Identity to secure the S3 bucket
+- The CloudFront distribution uses Origin Access Control (OAC) to secure the S3 bucket
+- CloudFront is configured with a Response Headers Policy for security headers (HSTS, CSP, etc.)
+- CloudFront access logging is enabled to a dedicated S3 bucket
 - The ACM certificate must be in the us-east-1 region for use with CloudFront
-- The IAM role for GitHub Actions needs to be updated with your specific repository
+- The IAM role for GitHub Actions follows the principle of least privilege
+- Terraform state is stored in an S3 backend with DynamoDB locking for secure and reliable state management
 
 ## Outputs
 
