@@ -1,6 +1,6 @@
 # Active Context
 
-*This document tracks the current focus, recent activities, immediate next steps, and important decisions or patterns relevant to the ongoing work. It's a snapshot of the project's current state. **Updated: April 4, 2025**.*
+*This document tracks the current focus, recent activities, immediate next steps, and important decisions or patterns relevant to the ongoing work. It's a snapshot of the project's current state. **Updated: April 4, 2025 (Post-Launch)**.*
 
 ## Current Focus
 
@@ -13,13 +13,14 @@
 
 ## Recent Changes (Since March 23, 2025)
 
+*   Successful initial deployment of the site to `robmclaughl.in`.
 *   Refined the CRT visual effects applied to the background video component (`HeroBackground`).
 *   (Previous changes before March 23rd included initial prototype, component implementation, Terraform setup, CI/CD pipeline setup).
 
 ## Immediate Next Steps
 
-1.  **Security Review:** Analyze Terraform configuration (`terraform/`) and platform files (e.g., `next.config.mjs`, CI/CD workflow) for security best practices and potential vulnerabilities.
-2.  **Baseline Testing:** Implement basic functional UI tests to cover core page elements and interactions (e.g., link clicks, responsiveness checks).
+1.  **Post-Launch Security Review:** Analyze Terraform configuration (`terraform/`), CI/CD workflow (`.github/workflows/deploy.yml`), and Next.js configuration (`next.config.mjs`) for security best practices and potential vulnerabilities now that the site is live.
+2.  **(Deferred) Baseline Testing:** Implement basic functional UI tests (e.g., using Cypress).
 
 ## Active Decisions & Considerations
 

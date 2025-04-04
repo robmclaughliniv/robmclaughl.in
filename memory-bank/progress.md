@@ -2,13 +2,14 @@
 
 *This document tracks the overall status of the project, what components are functional, what remains to be built, known issues, and the evolution of key decisions.*
 
-## Current Status (as of March 23, 2025)
+## Current Status (as of April 4, 2025)
 
-*   Next.js application prototype completed.
+*   Next.js application prototype completed and deployed.
 *   Core UI components (including custom ones like `HeroBackground`) implemented with lo-fi theme and responsiveness.
-*   Infrastructure as Code (Terraform) configuration created for AWS deployment (S3, CloudFront, Route53, IAM).
-*   CI/CD pipeline set up using GitHub Actions.
-*   Project is awaiting initial deployment and further refinement.
+*   Infrastructure as Code (Terraform) configuration created and successfully applied for AWS deployment (S3, CloudFront, Route53, IAM).
+*   CI/CD pipeline set up using GitHub Actions and operational.
+*   Site is live at `robmclaughl.in`.
+*   Current focus is on post-launch security review and potential future enhancements.
 
 ## What Works
 
@@ -19,19 +20,17 @@
     *   Custom components: `CoffeeCup`, `Waveform`, `HeroBackground` (with video/image background, effects, optimizations).
     *   Social links implemented.
 *   **Infrastructure & Deployment:**
-    *   Terraform scripts for AWS resources (S3, CloudFront, Route53, ACM, IAM Role).
-    *   GitHub Actions workflow for CI/CD.
-    *   Deployment scripts created.
+    *   Terraform scripts for AWS resources (S3, CloudFront, Route53, ACM, IAM Role) successfully provisioned infrastructure.
+    *   GitHub Actions workflow for CI/CD is functional and deploys changes.
+    *   Successful initial deployment to `robmclaughl.in`.
 
 ## What's Left to Build / Next Steps
 
-*   **Deployment:**
-    *   Execute Terraform scripts to provision AWS infrastructure.
-    *   Configure GitHub repository secrets for the CI/CD pipeline.
-    *   Perform initial end-to-end deployment test.
+*   **Security & Testing:**
+    *   Perform post-launch security review (Terraform, CI/CD, Next.js config).
+    *   Implement baseline UI tests (e.g., using Cypress).
 *   **Content & Refinement:**
-    *   Finalize website content (text, links).
-    *   Performance testing and optimization.
+    *   Ongoing performance monitoring and optimization.
     *   Further UI/UX enhancements (e.g., light/dark mode toggle).
 *   **Future Phases (Post-MVP):**
     *   Add analytics (optional).
@@ -40,9 +39,8 @@
 
 ## Known Issues & Bugs
 
-*   Initial deployment has not yet occurred.
-*   Full end-to-end testing of the deployment pipeline is pending.
-*   Content needs final review and refinement.
+*   Baseline UI tests are not yet implemented.
+*   Content may require ongoing refinement based on feedback or evolving requirements.
 
 ## Decision Log / Evolution
 
