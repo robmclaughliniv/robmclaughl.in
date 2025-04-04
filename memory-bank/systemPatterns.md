@@ -6,7 +6,7 @@
 
 *   **Frontend Application:** Single-page application built with Next.js 13 (App Router). Primarily uses Static Site Generation (SSG) for the MVP, resulting in static HTML, CSS, and JS assets.
 *   **Hosting:** Static assets hosted on AWS S3.
-*   **Delivery:** AWS CloudFront CDN serves assets globally, provides HTTPS via ACM certificate, and points to the S3 origin using Origin Access Control (OAC).
+*   **Delivery:** AWS CloudFront CDN serves assets globally, provides HTTPS via ACM certificate, and points to the S3 origin using Origin Access Control (OAC). Security headers are applied via a CloudFront Response Headers Policy, and access logging is enabled.
 *   **DNS:** AWS Route 53 manages the `robmclaughl.in` domain, pointing to the CloudFront distribution.
 *   **Infrastructure Management:** All AWS resources are defined and managed using Terraform (Infrastructure as Code).
 *   **Deployment Pipeline:** Automated builds and deployments triggered by pushes to the `main` branch via GitHub Actions.
@@ -45,7 +45,7 @@ graph TD
 
 *   **Framework Choice (Next.js):** Chosen for performance (SSR/SSG), SEO benefits, TypeScript support, and React ecosystem. App Router used for modern features.
 *   **Styling (Tailwind CSS + shadcn/ui):** Utility-first CSS for rapid development and custom styling. Shadcn/ui provides accessible, pre-built components compatible with Tailwind.
-*   **Hosting (AWS S3 + CloudFront):** Provides scalable, secure, and performant static site hosting with global CDN delivery and HTTPS.
+*   **Hosting (AWS S3 + CloudFront):** Provides scalable, secure, and performant static site hosting with global CDN delivery, HTTPS, security headers, and access logging.
 *   **Infrastructure as Code (Terraform):** Ensures reproducible, version-controlled, and automated management of AWS resources.
 *   **CI/CD (GitHub Actions):** Automates the build and deployment process for efficiency and consistency.
 *   **Secure AWS Authentication (OIDC):** Avoids storing long-lived AWS credentials in GitHub by using OpenID Connect for temporary role assumption.

@@ -22,7 +22,7 @@
 *   **MVP Focus:** Initial build is a minimal single-page application.
 *   **Performance:** Must load quickly (leveraging static generation and CDN).
 *   **Responsiveness:** Must work well across mobile, tablet, and desktop.
-*   **Security:** Must use HTTPS, secure S3 bucket configuration (OAC), secure CI/CD (OIDC). Avoid revealing implementation details (e.g., disable `x-powered-by` header).
+*   **Security:** Must use HTTPS, secure S3 bucket configuration (OAC), secure CI/CD (OIDC), security headers via CloudFront Response Headers Policy, and access logging. Avoid revealing implementation details (e.g., disable `x-powered-by` header).
 *   **Timeline:** Initial MVP targeted for rapid completion ("tonight").
 
 ## Key Dependencies
@@ -41,4 +41,4 @@
 *   **Linters/Formatters:** TypeScript is used. Assumed standard tools like ESLint/Prettier are configured (typical for Next.js starter). Config files: `tsconfig.json`, `postcss.config.mjs`, `tailwind.config.ts`.
 *   **Testing:** Not implemented in MVP.
 *   **Build Process:** `pnpm run build` (uses `next build`). Likely generates static assets for deployment.
-*   **Deployment:** Automated via GitHub Actions workflow (`.github/workflows/deploy.yml`). Uses OIDC for secure AWS authentication. Builds the site, syncs static files to S3, invalidates CloudFront cache. Infrastructure defined in Terraform (`terraform/` directory).
+*   **Deployment:** Automated via GitHub Actions workflow (`.github/workflows/deploy.yml`). Uses OIDC for secure AWS authentication. Builds the site using pnpm, syncs static files to S3, invalidates CloudFront cache. Infrastructure defined in Terraform (`terraform/` directory) with state stored in S3 backend.

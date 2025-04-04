@@ -47,9 +47,8 @@ data "aws_iam_policy_document" "s3_deploy" {
     effect = "Allow"
     actions = [
       "s3:PutObject",
-      "s3:GetObject",
-      "s3:DeleteObject",
-      "s3:PutObjectAcl"
+      "s3:GetObject", # Retaining GetObject for potential sync checks, can be removed if sync doesn't need it
+      "s3:DeleteObject"
     ]
     resources = ["${var.bucket_arn}/*"]
   }

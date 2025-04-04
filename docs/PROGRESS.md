@@ -1,11 +1,12 @@
 # Project Progress - robmclaughl.in
 
 ## Current Status
-- Next.js application prototype completed
-- Core UI components implemented
-- Infrastructure as Code (Terraform) configuration created
-- CI/CD pipeline set up with GitHub Actions
-- Moved progress tracking file into docs directory
+- Next.js application prototype completed and deployed
+- Core UI components implemented with lo-fi theme and responsiveness
+- Infrastructure as Code (Terraform) configuration created and successfully applied
+- CI/CD pipeline set up with GitHub Actions and operational
+- Site is live at `robmclaughl.in`
+- Security review completed and improvements implemented
 
 ## Completed Tasks
 
@@ -56,25 +57,25 @@ Example usage in page.tsx:
 
 ### Infrastructure
 - ✅ Terraform configuration for AWS resources
-  - S3 bucket for static content
-  - CloudFront distribution with HTTPS
+  - S3 bucket for static content (with public access blocked)
+  - CloudFront distribution with HTTPS, OAC, security headers, and access logging
   - ACM certificate
   - Route53 DNS records
-  - IAM role for GitHub Actions
-- ✅ GitHub Actions workflow for automated deployments
+  - IAM role for GitHub Actions with least privilege permissions
+  - S3 backend for Terraform state with DynamoDB locking
+- ✅ GitHub Actions workflow for automated deployments using pnpm
 - ✅ Added deployment scripts
 - ✅ Configured deployment environment variables
+- ✅ Successfully deployed to production
 
 ## In Progress
-- Waiting for initial deployment
 - Content refinement
 - Performance testing
 - Additional UI/UX enhancements
+- Baseline UI testing implementation (Cypress)
 
 ## Next Steps
-- Deploy infrastructure using Terraform
-- Set up GitHub repository secrets for CI/CD
-- Test end-to-end deployment
+- Implement baseline UI tests using Cypress
 - Add analytics (optional)
 - Consider adding blog functionality in future iteration
 - Implement light/dark mode toggle
@@ -91,4 +92,18 @@ Example usage in page.tsx:
 - Phase 2 (Future): Content expansion and additional features
 - Phase 3 (Future): Advanced interactivity and dynamic content
 
-*Last updated: March 23, 2025*
+## Security Improvements (April 4, 2025)
+- ✅ Migrated from CloudFront Origin Access Identity (OAI) to Origin Access Control (OAC)
+- ✅ Enabled CloudFront access logging to a dedicated S3 bucket
+- ✅ Implemented a Response Headers Policy with security headers:
+  - Strict-Transport-Security (HSTS)
+  - Content-Security-Policy (CSP)
+  - X-Content-Type-Options
+  - X-Frame-Options
+  - Referrer-Policy
+  - X-XSS-Protection
+- ✅ Removed unnecessary S3 permissions from the GitHub Actions IAM role
+- ✅ Updated GitHub Actions workflow to use pnpm and removed redundant flags
+- ✅ Enabled S3 backend for Terraform state with DynamoDB locking
+
+*Last updated: April 4, 2025*
