@@ -15,12 +15,19 @@
 
 *   Successful initial deployment of the site to `robmclaughl.in`.
 *   Refined the CRT visual effects applied to the background video component (`HeroBackground`).
+*   Implemented security improvements following post-launch security review.
 *   (Previous changes before March 23rd included initial prototype, component implementation, Terraform setup, CI/CD pipeline setup).
 
 ## Immediate Next Steps
 
-1.  **Post-Launch Security Review:** Analyze Terraform configuration (`terraform/`), CI/CD workflow (`.github/workflows/deploy.yml`), and Next.js configuration (`next.config.mjs`) for security best practices and potential vulnerabilities now that the site is live.
-2.  **(Deferred) Baseline Testing:** Implement basic functional UI tests (e.g., using Cypress).
+1.  **✅ Post-Launch Security Review:** Completed. Security improvements implemented:
+    * Migrated from CloudFront OAI to OAC for S3 origin access
+    * Enabled CloudFront access logging to a dedicated S3 bucket
+    * Added CloudFront Response Headers Policy with security headers (HSTS, CSP, etc.)
+    * Removed unnecessary S3 permissions from IAM role
+    * Updated GitHub Actions workflow to use pnpm and removed redundant flags
+    * Enabled S3 backend for Terraform state
+2.  **Next: Baseline Testing:** Implement basic functional UI tests using Cypress.
 
 ## Active Decisions & Considerations
 
@@ -38,5 +45,6 @@
 
 ## Learnings & Insights (Recent)
 
+*   Security best practices for AWS static site hosting include using OAC instead of OAI, implementing security headers, and enabling access logging.
 *   Refining CRT effects requires careful tuning of CSS filters, overlays, and potentially shaders for optimal visual appeal and performance.
 *   (Previous learnings included `HeroBackground` optimizations and IaC/CI/CD setup benefits).

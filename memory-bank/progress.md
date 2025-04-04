@@ -9,7 +9,7 @@
 *   Infrastructure as Code (Terraform) configuration created and successfully applied for AWS deployment (S3, CloudFront, Route53, IAM).
 *   CI/CD pipeline set up using GitHub Actions and operational.
 *   Site is live at `robmclaughl.in`.
-*   Current focus is on post-launch security review and potential future enhancements.
+*   Security review completed and improvements implemented.
 
 ## What Works
 
@@ -23,12 +23,12 @@
     *   Terraform scripts for AWS resources (S3, CloudFront, Route53, ACM, IAM Role) successfully provisioned infrastructure.
     *   GitHub Actions workflow for CI/CD is functional and deploys changes.
     *   Successful initial deployment to `robmclaughl.in`.
+    *   Security improvements implemented (OAC, logging, security headers, etc.).
 
 ## What's Left to Build / Next Steps
 
-*   **Security & Testing:**
-    *   Perform post-launch security review (Terraform, CI/CD, Next.js config).
-    *   Implement baseline UI tests (e.g., using Cypress).
+*   **Testing:**
+    *   Implement baseline UI tests using Cypress.
 *   **Content & Refinement:**
     *   Ongoing performance monitoring and optimization.
     *   Further UI/UX enhancements (e.g., light/dark mode toggle).
@@ -42,9 +42,22 @@
 *   Baseline UI tests are not yet implemented.
 *   Content may require ongoing refinement based on feedback or evolving requirements.
 
+## Recent Security Improvements (April 4, 2025)
+
+*   **CloudFront:**
+    *   Migrated from Origin Access Identity (OAI) to Origin Access Control (OAC) for S3 origin access.
+    *   Enabled access logging to a dedicated S3 bucket.
+    *   Implemented a Response Headers Policy with security headers (HSTS, CSP, X-Content-Type-Options, etc.).
+*   **IAM & Deployment:**
+    *   Removed unnecessary `s3:PutObjectAcl` permission from the GitHub Actions IAM role.
+    *   Updated GitHub Actions workflow to use pnpm (matching local development) and removed redundant `--acl private` flag.
+*   **Terraform:**
+    *   Enabled S3 backend with DynamoDB locking for secure and reliable state management.
+
 ## Decision Log / Evolution
 
 *   Project follows a phased approach (MVP first, then expansion). See `projectbrief.md`.
 *   Progress tracking moved from root to `docs/PROGRESS.md`.
 *   Adopted Next.js App Router, TailwindCSS, shadcn/ui, Terraform, AWS (S3/CloudFront), and GitHub Actions as key technologies. See `techContext.md` and `systemPatterns.md`.
 *   Emphasis on Infrastructure as Code (Terraform) and automated CI/CD from the start.
+*   Security improvements implemented based on post-launch security review.

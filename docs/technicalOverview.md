@@ -22,27 +22,28 @@ We are deploying on AWS for full control and scalability. The static site assets
 
 The plan is to build the Next.js site and export it as static files, then host those files on an S3 bucket (configured for web hosting). To ensure global low-latency access and HTTPS, we'll put Amazon CloudFront (a CDN) in front of the S3 bucket. CloudFront will cache the content at edge locations worldwide and handle SSL termination.
 
-This also allows us to keep the S3 bucket private and secure – we'll use an Origin Access Control (OAC) or similar mechanism so that CloudFront can fetch from S3, but the bucket isn't publicly accessible. (This is a security best practice: "If you want to keep S3 Block Public Access enabled and host a static website, you can use Amazon CloudFront origin access control (OAC). CloudFront provides the capabilities required to set up a secure static website... providing additional security headers, such as HTTPS.")
+This also allows us to keep the S3 bucket private and secure – we use Origin Access Control (OAC) so that CloudFront can fetch from S3, but the bucket isn't publicly accessible. (This is a security best practice: "If you want to keep S3 Block Public Access enabled and host a static website, you can use Amazon CloudFront origin access control (OAC). CloudFront provides the capabilities required to set up a secure static website... providing additional security headers, such as HTTPS.")
 
 The custom domain robmclaughl.in will be managed via Amazon Route 53 (AWS's DNS service). We'll create a hosted zone for the domain and use an A Record (alias) to point the root domain to the CloudFront distribution – this ties the domain to our CloudFront endpoint seamlessly. An AWS Certificate Manager (ACM) SSL certificate will be issued for the domain and attached to CloudFront, so that the site is served over HTTPS with a valid certificate (no browser warnings).
 
 We are aiming for Infrastructure as Code, so all AWS resources (S3 bucket, CloudFront distribution, DNS records, etc.) will be defined in code using Terraform. Terraform is a tool that lets you define cloud infrastructure in human-readable configuration files, then deploy those resources consistently.
 
-By writing Terraform configs, we ensure the setup is reproducible and version-controlled. For example, we'll write Terraform to create the S3 bucket (with the proper policies), the CloudFront distro (with origin pointing to that bucket, enabling OAC and compressions, etc.), and the Route53 DNS records. This approach avoids manual clicking in the AWS console and makes it easier to tear down or modify resources. (Terraform's declarative nature means we just describe what we want – e.g., "an S3 bucket named X" – and it takes care of the AWS API calls to make it so.)
+By writing Terraform configs, we ensure the setup is reproducible and version-controlled. For example, we've written Terraform to create the S3 bucket (with the proper policies), the CloudFront distribution (with origin pointing to that bucket, enabling OAC, security headers, and compression), and the Route53 DNS records. The Terraform state is stored in an S3 backend with DynamoDB locking for secure and reliable state management. This approach avoids manual clicking in the AWS console and makes it easier to tear down or modify resources. (Terraform's declarative nature means we just describe what we want – e.g., "an S3 bucket named X" – and it takes care of the AWS API calls to make it so.)
 
 If time is very short, we might use a quicker route like the AWS Amplify console or even deploy on Vercel as a stop-gap, but the preferred path is S3/CloudFront via Terraform for full control. We'll keep the Terraform config minimal (just what's needed for this site) but structured for future growth (e.g., easy to add a CDN invalidation or a new Lambda function later if needed).
 
 ## CI/CD Pipeline
 
-For continuous integration and deployment, GitHub Actions will be used. GitHub Actions allows us to automate building and deploying the site whenever we push new changes to the repository.
+For continuous integration and deployment, GitHub Actions is used. GitHub Actions allows us to automate building and deploying the site whenever we push new changes to the repository.
 
-We'll set up a workflow such that any push or merge to the main branch triggers a job to build the Next.js project and sync the output to S3, then invalidate CloudFront cache. In practice, the CI script will:
+We've set up a workflow such that any push or merge to the main branch triggers a job to build the Next.js project and sync the output to S3, then invalidate CloudFront cache. In practice, the CI script:
 
-1. Checkout the code
-2. Install dependencies
-3. Run the Next.js build (and possibly next export to generate static files)
-4. Use AWS CLI or an action to upload the files to S3
-5. Issue a CloudFront cache invalidation so the new content goes live immediately
+1. Checks out the code
+2. Sets up pnpm (our package manager)
+3. Installs dependencies with `pnpm install --frozen-lockfile`
+4. Runs the Next.js build with `pnpm run build` (which generates static files)
+5. Uses AWS CLI to upload the files to S3
+6. Issues a CloudFront cache invalidation so the new content goes live immediately
 
 The entire pipeline runs automatically, meaning Rob can just git push to deploy new updates after tonight.
 
@@ -52,21 +53,29 @@ This way, the GitHub runner will get temporary credentials to deploy, and we don
 
 ## Production Readiness & Security
 
-Even though this is an MVP, we'll apply a few basic security best practices from the start:
+Even though this is an MVP, we've applied several security best practices:
 
-- We'll disable any framework banners or unnecessary headers – for example, Next.js by default adds an `x-powered-by: Next.js` header to responses; we will turn that off in next.config.js to avoid revealing implementation details.
-- The site will enforce HTTPS (HTTP requests will be redirected to HTTPS by CloudFront).
-- We will configure appropriate MIME types and caching for static assets via CloudFront.
+- We've disabled framework banners and unnecessary headers – for example, Next.js by default adds an `x-powered-by: Next.js` header to responses; we've turned that off in next.config.js to avoid revealing implementation details.
+- The site enforces HTTPS (HTTP requests are redirected to HTTPS by CloudFront).
+- We've implemented a comprehensive set of security headers via CloudFront Response Headers Policy, including:
+  - Strict-Transport-Security (HSTS) to enforce HTTPS
+  - Content-Security-Policy (CSP) to restrict content sources
+  - X-Content-Type-Options to prevent MIME type sniffing
+  - X-Frame-Options to prevent clickjacking
+  - Referrer-Policy to control referrer information
+  - X-XSS-Protection for legacy XSS protection
+- We've configured appropriate MIME types and caching for static assets via CloudFront.
 
 The content itself is simple, so attack surface is minimal (no forms or SQL, etc.), but we will ensure no obvious vulnerabilities:
 - Use latest dependencies
 - Include a Content Security Policy if we had external scripts (not needed for this static MVP)
 - Ensure cookies (if any in future) are secure and same-site
 
-The AWS resources will be locked down:
-- The S3 bucket won't be public, and will be encrypted at rest (S3 enables SSE by default now).
-- Route53 will only point to our CloudFront, and CloudFront will have an TLS cert so data in transit is encrypted.
-- We'll log requests (CloudFront can log access, which we can review later).
+The AWS resources are locked down:
+- The S3 bucket is not public, with all public access blocked, and is encrypted at rest (using S3's default SSE-S3 encryption).
+- Route53 only points to our CloudFront, and CloudFront has a TLS cert so data in transit is encrypted.
+- We've enabled access logging for CloudFront to a dedicated S3 bucket, allowing us to monitor and analyze traffic.
+- The IAM role used by GitHub Actions follows the principle of least privilege, with only the permissions needed for deployment.
 
 Finally, performance is a facet of "production-ready" for us – the site should be very fast. Using Next.js and S3+CloudFront gives us inherently good performance (pre-rendered HTML served from a CDN). We will optimize images or media if any (though likely the MVP has no large media aside from maybe a background). Tailwind will purge unused CSS, so the CSS file will be tiny. The result should be a site that loads almost instantly and scores well on performance metrics.
 
