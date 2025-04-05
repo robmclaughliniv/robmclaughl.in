@@ -151,7 +151,7 @@ jobs:
 
       - name: Preview Deployment Success
         # Use single quotes for the echo command to avoid shell parsing issues
-        run: printf '🚀 Preview Deployment for PR #%s (branch %s) completed successfully!\n' "${{ github.event.pull_request.number }}" "${{ steps.get_branch.outputs.BRANCH_SLUG }}"
+        run: printf '🚀 TO THE MOON 🚀'
 
   # -----------------------------------
   # ----- Preview Cleanup Job -----
