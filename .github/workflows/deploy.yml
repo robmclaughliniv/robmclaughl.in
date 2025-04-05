@@ -1,54 +1,204 @@
-name: Deploy to AWS
+name: Deploy Website
 
 on:
   push:
-    branches: [ main, master ]
-  workflow_dispatch:
+    branches:
+      - master # Trigger production deployment
+      # Preview deployment trigger handled below to avoid duplicate runs with pull_request trigger
+  pull_request:
+    types: [opened, synchronize, reopened] # Trigger preview deployment on PR events
+  delete:
+    branches: # Correctly indented under delete
+      - '*'      # Indented under branches - Trigger cleanup when any non-main branch is deleted
+      - '!master' # Indented under branches - Exclude master branch from delete trigger
+  workflow_dispatch: # Allow manual trigger for production
 
 permissions:
-  id-token: write
-  contents: read
+  id-token: write   # Required for AWS OIDC
+  contents: read    # Required for checkout
+  pull-requests: write # Required for writing PR comments
+
+# Use concurrency groups to cancel older runs for the same branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  deploy:
+  # -------------------------------------
+  # ----- Production Deployment Job -----
+  # -------------------------------------
+  deploy-prod:
+    # Only run on push to master or manual dispatch
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: prod
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        # Ensure this version matches your project's lock file
+        uses: pnpm/action-setup@v3
         with:
-          version: 10 # Or specify the version used in your project
+          version: 8
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'pnpm' # Use pnpm cache
+          node-version: '18' # Or your project's Node version
+          cache: 'pnpm'
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
+      - name: Build Production
+        # No BASE_PATH needed for production
         run: pnpm run build
-        
+
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: us-west-2
-          role-session-name: rob-site-deploy
-          mask-aws-account-id: false  # Helps with debugging
+          aws-region: us-west-2 # Replace with your AWS region
+          role-session-name: rob-site-prod-deploy
+          mask-aws-account-id: 'no'
 
-      - name: Deploy to S3
-        run: |
-          aws s3 sync ./out s3://robmclaughl-in-website-bucket --delete
-        
-      - name: Invalidate CloudFront
-        run: |
-          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
-          
+      - name: Deploy Production to S3
+        run: aws s3 sync ./out s3://${{ secrets.AWS_S3_BUCKET_NAME }} --delete
+
+      - name: Invalidate Production CloudFront
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+
       - name: Deployment Success
-        run: echo "🚀 Deployment completed successfully!"
+        run: echo "🚀 Production Deployment completed successfully!"
+
+  # -----------------------------------
+  # ----- Preview Deployment Job -----
+  # -----------------------------------
+  deploy-preview:
+    # Trigger ONLY on pull_request events (opened, synchronize, reopened)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    # environment: dev # Removed as it may not be configured
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        # Fetch depth 0 is important for potentially checking previous comments if needed
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Get Branch Name and Sanitize
+        id: get_branch
+        run: |
+          # For PR events, the branch name is in github.head_ref
+          BRANCH_NAME="${{ github.head_ref }}"
+          # Sanitize: Replace non-alphanumeric (excluding '-') with '-', remove leading/trailing '-', lowercase, truncate
+          BRANCH_SLUG=$(echo "$BRANCH_NAME" | sed -e 's/[^a-zA-Z0-9-]/-/g' -e 's/^-*//' -e 's/-*$//' | tr '[:upper:]' '[:lower:]' | cut -c 1-63)
+          # Ensure slug is not empty after sanitization
+          if [ -z "$BRANCH_SLUG" ]; then
+            BRANCH_SLUG="pr-${{ github.event.pull_request.number }}"
+          fi
+          echo "BRANCH_SLUG=$BRANCH_SLUG" >> $GITHUB_OUTPUT
+          echo "Preview Branch Slug: $BRANCH_SLUG"
+
+      - name: Build Preview
+        env:
+          # Set BASE_PATH for the build
+          BASE_PATH: /branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}
+        run: pnpm run build
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-west-2 # Replace with your AWS region
+          role-session-name: rob-site-preview-deploy
+          mask-aws-account-id: 'no'
+
+      - name: Deploy Preview to S3
+        run: aws s3 sync ./out s3://${{ secrets.AWS_S3_BUCKET_NAME }}/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}/ --delete
+
+      - name: Invalidate Preview CloudFront
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}/*"
+
+      - name: Post Preview URL to PR
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            🚀 Preview Environment deployed successfully!
+
+            🔗 **Preview URL:** https://${{ secrets.DOMAIN_NAME }}/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}
+
+            *Deployment triggered by commit [`${{ github.sha }}`](https://github.com/${{ github.repository }}/commit/${{ github.sha }}). CloudFront cache invalidation might take a few minutes.*
+          edit-mode: replace # Update existing comment if found
+
+      - name: Preview Deployment Success
+        run: echo "🚀 Preview Deployment for PR #${{ github.event.pull_request.number }} (branch ${{ steps.get_branch.outputs.BRANCH_SLUG }}) completed successfully!"
+
+  # -----------------------------------
+  # ----- Preview Cleanup Job -----
+  # -----------------------------------
+  cleanup-preview:
+    # Trigger ONLY on branch deletion events (for non-master branches)
+    if: github.event_name == 'delete' && github.ref != 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Deleted Branch Name and Sanitize
+        id: get_branch
+        run: |
+          # For delete events, the branch name is in github.ref (e.g., refs/heads/feature/branch)
+          BRANCH_NAME="${{ github.ref }}"
+          BRANCH_NAME=${BRANCH_NAME#refs/heads/}
+          # Sanitize the same way as in deploy-preview
+          BRANCH_SLUG=$(echo "$BRANCH_NAME" | sed -e 's/[^a-zA-Z0-9-]/-/g' -e 's/^-*//' -e 's/-*$//' | tr '[:upper:]' '[:lower:]' | cut -c 1-63)
+          if [ -z "$BRANCH_SLUG" ]; then
+            # This case is less likely for delete, but handle defensively
+            echo "::error::Could not determine a valid slug for deleted branch ref: ${{ github.ref }}"
+            exit 1
+          fi
+          echo "BRANCH_SLUG=$BRANCH_SLUG" >> $GITHUB_OUTPUT
+          echo "Cleaning up Branch Slug: $BRANCH_SLUG"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-west-2 # Replace with your AWS region
+          role-session-name: rob-site-preview-cleanup
+          mask-aws-account-id: 'no'
+
+      - name: Remove Preview from S3
+        run: aws s3 rm s3://${{ secrets.AWS_S3_BUCKET_NAME }}/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}/ --recursive
+
+      - name: Invalidate Deleted Preview CloudFront
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}/*"
+
+      - name: Cleanup Success
+        run: echo "🧹 Preview Cleanup for branch slug ${{ steps.get_branch.outputs.BRANCH_SLUG }} completed successfully!"
+
+      # Optional: Find related PRs and remove/update comments (more complex)
+      # - name: Find PRs for deleted branch and update comment
+      #   uses: actions/github-script@v6
+      #   with:
+      #     github-token: ${{secrets.GITHUB_TOKEN}}
+      #     script: |
+      #       // Script to find PRs and update comment would go here
+      #       // Example using peter-evans/find-comment and create-or-update-comment
+      #       // ... implementation details ...
