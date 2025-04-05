@@ -81,6 +81,7 @@ module "cloudfront" {
   logs_bucket = module.logs_bucket.bucket_name
   logs_prefix = "cloudfront-logs/"
   index_rewrite_paths = ["/branch/*"] # Add list of paths requiring index rewrite
+  waf_web_acl_arn = aws_wafv2_web_acl.main_waf_acl.arn # Pass the WAF ARN
 }
 
 # Route53 configuration
@@ -90,6 +91,66 @@ module "route53" {
   zone_id     = "Z2PPIVE6CKK74T" # Pass the correct Zone ID directly (without trailing X)
   cloudfront_distribution_domain_name = module.cloudfront.distribution_domain_name
   cloudfront_distribution_zone_id = module.cloudfront.distribution_zone_id
+}
+
+# WAF Web ACL for CloudFront
+# Note: Rules can incur costs based on usage.
+resource "aws_wafv2_web_acl" "main_waf_acl" {
+  provider    = aws.us_east_1 # Specify the correct provider for CLOUDFRONT scope
+  name        = "robmclaughl-in-waf-acl"
+  description = "WAF Web ACL for robmclaughl.in CloudFront distribution"
+  scope       = "CLOUDFRONT"
+
+  default_action {
+    allow {}
+  }
+
+  # AWS Managed Common Rule Set - Covers OWASP Top 10 and other common threats
+  rule {
+    name     = "AWSManagedRulesCommonRuleSet"
+    priority = 10
+    override_action {
+      none {} # Use the actions defined within the rule group
+    }
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "awsCommonRules"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  # AWS Managed Amazon IP Reputation List - Blocks known malicious IPs
+  rule {
+    name     = "AWSManagedRulesAmazonIpReputationList"
+    priority = 20
+    override_action {
+      none {} # Use the actions defined within the rule group
+    }
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesAmazonIpReputationList"
+        vendor_name = "AWS"
+      }
+    }
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "awsIpReputation"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  # General visibility configuration for the ACL itself
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "mainWafAcl"
+    sampled_requests_enabled   = true
+  }
 }
 
 # IAM Role for GitHub Actions
@@ -151,6 +212,12 @@ output "cloudfront_domain_name" {
 output "website_url" {
   description = "URL of the website"
   value       = "https://robmclaughl.in"
+}
+
+# Add WAF ACL ARN output
+output "waf_web_acl_arn" {
+  description = "ARN of the WAF Web ACL associated with CloudFront"
+  value       = aws_wafv2_web_acl.main_waf_acl.arn
 }
 
 output "github_actions_role_arn" {

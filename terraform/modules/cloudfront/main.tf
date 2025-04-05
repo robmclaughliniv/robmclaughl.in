@@ -182,6 +182,10 @@ resource "aws_cloudfront_distribution" "website" {
     }
   }
 
+  # WAF configuration
+  # Attach the WAF Web ACL if an ARN is provided
+  web_acl_id = var.waf_web_acl_arn
+
   # Logging configuration
   dynamic "logging_config" {
     for_each = var.logs_bucket != "" ? [1] : []
