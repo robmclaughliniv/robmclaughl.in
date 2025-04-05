@@ -62,7 +62,6 @@
 }
 
 /* Moving scanline */
-/*
 .crt-screen::before {
   content: "";
   position: absolute;
@@ -70,17 +69,15 @@
   height: 8px;
   left: 0;
   top: 0;
-  z-index: 40; 
+  z-index: 40;
   background-color: rgba(0, 0, 0, 0.5);
   box-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
   opacity: 0.2;
   pointer-events: none;
   animation: scanline 10s ease-in-out infinite;
 }
-*/
 
 /* Static scanlines */
-/*
 .crt-screen::after {
   content: "";
   position: absolute;
@@ -95,10 +92,8 @@
   pointer-events: none;
   animation: scanlines .2s linear infinite;
 }
-*/
 
 /* Animations */
-/*
 @keyframes scanline {
   0% {
     top: -10px;
@@ -113,9 +108,7 @@
     top: 100%;
   }
 }
-*/
 
-/*
 @keyframes scanlines {
   0% {
     background-position: 0 0;
@@ -124,16 +117,12 @@
     background-position: 0 8px;
   }
 }
-*/
 
 /* CRT Flicker */
-/*
 .crt-flicker {
   animation: flicker 0.15s infinite alternate;
 }
-*/
 
-/*
 @keyframes flicker {
   0% {
     opacity: 0.97;
@@ -142,7 +131,6 @@
     opacity: 1;
   }
 }
-*/
 
 /* Enhanced gradient animation for lo-fi vibe - slower and more subtle */
 @keyframes gradient-shift {
