@@ -23,7 +23,7 @@ resource "aws_cloudfront_response_headers_policy" "security_headers" {
     
     # Content-Security-Policy: Restrict sources of content
     content_security_policy {
-      content_security_policy = "default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; media-src 'self'; object-src 'none'; frame-src 'none';"
+      content_security_policy = "default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; media-src 'self'; object-src 'none'; frame-src 'none';"
       override                = true
     }
     
