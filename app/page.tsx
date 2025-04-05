@@ -5,22 +5,22 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Github, Linkedin, Mail, Music } from "lucide-react"
 import { Waveform } from "@/components/waveform"
 import { HeroBackground } from "@/components/HeroBackground"
-import { useEffect } from "react"
+// import { useEffect } from "react" // Keep the import if other hooks use it, otherwise remove
 
 export default function Home() {
   // Force reflow to ensure animations restart on mount
-  useEffect(() => {
+  /* useEffect(() => {
     const screen = document.querySelector('.crt-screen');
     if (screen) {
       // Reset animation by briefly removing class
       screen.classList.remove('crt-screen');
-      void screen.offsetWidth;
+      void screen.offsetWidth; // Trigger reflow
       screen.classList.add('crt-screen');
     }
-  }, []);
+  }, []); */
 
   return (
-    <main className="crt-flicker relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
+    <main className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
       {/* Hero Background with CRT effect */}
       <HeroBackground 
         videoSrc="/videos/bg-sand.mp4" 
