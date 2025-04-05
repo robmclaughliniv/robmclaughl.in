@@ -34,3 +34,9 @@ variable "logs_prefix" {
   type        = string
   default     = "cloudfront-logs/"
 }
+
+variable "index_rewrite_paths" {
+  description = "A list of path patterns (e.g., /foo/*) that should have index.html rewrite applied."
+  type        = list(string)
+  default     = []
+}

@@ -80,6 +80,7 @@ module "cloudfront" {
   domain_names = ["robmclaughl.in", "www.robmclaughl.in"]
   logs_bucket = module.logs_bucket.bucket_name
   logs_prefix = "cloudfront-logs/"
+  index_rewrite_paths = ["/branch/*"] # Add list of paths requiring index rewrite
 }
 
 # Route53 configuration
