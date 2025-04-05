@@ -31,7 +31,7 @@ jobs:
     # Only run on push to master or manual dispatch
     if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    environment: prod
+    environment: prod # Assumes 'prod' environment exists for production secrets/approvals if needed
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -40,7 +40,7 @@ jobs:
         # Ensure this version matches your project's lock file
         uses: pnpm/action-setup@v3
         with:
-          version: 10.7.1
+          version: 10.7.1 # Match local pnpm version
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -58,16 +58,16 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }} # Use Repository Secret
           aws-region: us-west-2 # Replace with your AWS region
           role-session-name: rob-site-prod-deploy
           mask-aws-account-id: 'no'
 
       - name: Deploy Production to S3
-        run: aws s3 sync ./out s3://${{ secrets.AWS_S3_BUCKET_NAME }} --delete
+        run: aws s3 sync ./out s3://${{ secrets.AWS_S3_BUCKET_NAME }} --delete # Use Repository Secret
 
       - name: Invalidate Production CloudFront
-        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*" # Use Repository Secret
 
       - name: Deployment Success
         run: echo "🚀 Production Deployment completed successfully!"
@@ -79,7 +79,7 @@ jobs:
     # Trigger ONLY on pull_request events (opened, synchronize, reopened)
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    # environment: dev # Removed as it may not be configured
+    # No environment specified, uses Repository Secrets
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -90,7 +90,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: 10.7.1
+          version: 10.7.1 # Match local pnpm version
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -124,16 +124,16 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }} # Use Repository Secret
           aws-region: us-west-2 # Replace with your AWS region
           role-session-name: rob-site-preview-deploy
           mask-aws-account-id: 'no'
 
       - name: Deploy Preview to S3
-        run: aws s3 sync ./out s3://${{ secrets.AWS_S3_BUCKET_NAME }}/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}/ --delete
+        run: aws s3 sync ./out s3://${{ secrets.AWS_S3_BUCKET_NAME }}/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}/ --delete # Use Repository Secret
 
       - name: Invalidate Preview CloudFront
-        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}/*"
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}/*" # Use Repository Secret
 
       - name: Post Preview URL to PR
         uses: peter-evans/create-or-update-comment@v4
@@ -150,7 +150,8 @@ jobs:
           edit-mode: replace # Update existing comment if found
 
       - name: Preview Deployment Success
-        run: echo "🚀 Preview Deployment for PR #${{ github.event.pull_request.number }} (branch ${{ steps.get_branch.outputs.BRANCH_SLUG }}) completed successfully!"
+        # Use single quotes for the echo command to avoid shell parsing issues
+        run: echo '🚀 Preview Deployment for PR #${{ github.event.pull_request.number }} (branch ${{ steps.get_branch.outputs.BRANCH_SLUG }}) completed successfully!'
 
   # -----------------------------------
   # ----- Preview Cleanup Job -----
@@ -159,6 +160,7 @@ jobs:
     # Trigger ONLY on branch deletion events (for non-master branches)
     if: github.event_name == 'delete' && github.ref != 'refs/heads/master'
     runs-on: ubuntu-latest
+    # No environment specified, uses Repository Secrets
     steps:
       - name: Get Deleted Branch Name and Sanitize
         id: get_branch
@@ -179,26 +181,16 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }} # Use Repository Secret
           aws-region: us-west-2 # Replace with your AWS region
           role-session-name: rob-site-preview-cleanup
           mask-aws-account-id: 'no'
 
       - name: Remove Preview from S3
-        run: aws s3 rm s3://${{ secrets.AWS_S3_BUCKET_NAME }}/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}/ --recursive
+        run: aws s3 rm s3://${{ secrets.AWS_S3_BUCKET_NAME }}/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}/ --recursive # Use Repository Secret
 
       - name: Invalidate Deleted Preview CloudFront
-        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}/*"
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}/*" # Use Repository Secret
 
       - name: Cleanup Success
         run: echo "🧹 Preview Cleanup for branch slug ${{ steps.get_branch.outputs.BRANCH_SLUG }} completed successfully!"
-
-      # Optional: Find related PRs and remove/update comments (more complex)
-      # - name: Find PRs for deleted branch and update comment
-      #   uses: actions/github-script@v6
-      #   with:
-      #     github-token: ${{secrets.GITHUB_TOKEN}}
-      #     script: |
-      #       // Script to find PRs and update comment would go here
-      #       // Example using peter-evans/find-comment and create-or-update-comment
-      #       // ... implementation details ...
