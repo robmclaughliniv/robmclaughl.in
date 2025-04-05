@@ -87,6 +87,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      # ADD THIS STEP for debugging
+      - name: List files in workspace root
+        run: ls -la
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
