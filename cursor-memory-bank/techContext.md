@@ -6,7 +6,7 @@
 
 *   **Frontend:** Next.js 13 (App Router), React, TypeScript, Tailwind CSS, shadcn/ui components.
 *   **Backend:** N/A (Static site generation for MVP).
-*   **Infrastructure:** AWS (S3 for hosting, CloudFront for CDN & HTTPS, Route 53 for DNS, ACM for SSL certificates). Infrastructure as Code managed by Terraform.
+*   **Infrastructure:** AWS (S3 for hosting, CloudFront for CDN & HTTPS, Route 53 for DNS, ACM for SSL certificates, CloudFront Functions for edge logic). Infrastructure as Code managed by Terraform.
 *   **CI/CD:** GitHub Actions.
 *   **Other Key Technologies:** AWS CLI (for deployment scripts).
 

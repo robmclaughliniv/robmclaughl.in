@@ -74,10 +74,12 @@ graph TD
 
 ## Key Technical Decisions
 
-*   **Framework Choice (Next.js):** Chosen for performance (SSG via `output: 'export'`), SEO benefits, TypeScript support, and React ecosystem. App Router used. `basePath` configuration used for preview deployments.
-*   **Styling (Tailwind CSS + shadcn/ui):** Utility-first CSS for rapid development and custom styling.
-*   **Hosting (AWS S3 + CloudFront):** Provides scalable, secure, performant static site hosting. OAC restricts direct S3 access. CloudFront Function handles default index document resolution.
-*   **Infrastructure as Code (Terraform):** Ensures reproducible, version-controlled infrastructure. Includes S3 lifecycle rule for preview cleanup.
+*   **Framework Choice (Next.js):** Chosen for performance (SSR/SSG), SEO benefits, TypeScript support, and React ecosystem. App Router used for modern features.
+*   **Styling (Tailwind CSS + shadcn/ui):** Utility-first CSS for rapid development and custom styling. Shadcn/ui provides accessible, pre-built components compatible with Tailwind.
+*   **Hosting (AWS S3 + CloudFront):** Provides scalable, secure, and performant static site hosting with global CDN delivery, HTTPS, security headers (including CSP requiring `script-src 'unsafe-inline'` for Next.js compatibility), and access logging.
+*   **CloudFront Functions:** Using a lightweight edge function (`index_rewrite`) to handle URI rewrites (appending `index.html`) for specific subdirectory path patterns, enabling clean URLs without needing S3 website hosting features.
+*   **Infrastructure as Code (Terraform):** Ensures reproducible, version-controlled, and automated management of AWS resources.
+    *   **Route53 Management:** Uses hardcoded Zone ID with `allow_overwrite = true` to safely manage existing DNS records.
 *   **CI/CD (GitHub Actions):** Multi-job workflow for production, preview deployment, and cleanup.
     *   Triggers based on `push` (master), `pull_request`, and `delete` events.
     *   Uses Repository Secrets for AWS credentials.

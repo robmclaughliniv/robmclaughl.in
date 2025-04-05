@@ -85,5 +85,5 @@
 *   Security improvements implemented based on post-launch security review.
 *   Adjusted CloudFront Content Security Policy (`script-src`) to include `'unsafe-inline'` to ensure compatibility with Next.js inline scripts (April 5, 2025).
 *   **Implemented Ephemeral Previews:** Added multi-job workflow (prod, preview, cleanup), used Next.js `basePath`, S3 prefixes, Repository Secrets, and CloudFront Function for index files ([Current Date]).
-*   **Troubleshooting Previews:** Resolved issues related to PNPM version mismatch, tarball integrity, secret scoping, and CloudFront index file serving ([Current Date]).
+*   **Production Branch:** Confirmed and updated workflow to use `master` branch ([Current Date]).
 *   **Production Branch:** Confirmed and updated workflow to use `master` branch ([Current Date]). 
