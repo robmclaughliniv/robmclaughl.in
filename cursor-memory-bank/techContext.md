@@ -7,6 +7,7 @@
 *   **Frontend:** Next.js 13 (App Router), React, TypeScript, Tailwind CSS, shadcn/ui components.
 *   **Backend:** N/A (Static site generation for MVP).
 *   **Infrastructure:** AWS (S3 for hosting, CloudFront for CDN & HTTPS, Route 53 for DNS, ACM for SSL certificates, CloudFront Functions for edge logic). Infrastructure as Code managed by Terraform.
+*   **Security:** AWS WAFv2 (associated with CloudFront, using Managed Rules).
 *   **CI/CD:** GitHub Actions.
 *   **Other Key Technologies:** AWS CLI (for deployment scripts).
 
@@ -52,6 +53,7 @@
     *   Manages AWS resources (S3, CloudFront, Route53, ACM, IAM Role).
     *   Uses S3 backend with DynamoDB locking.
     *   Includes S3 lifecycle rule to expire `branch/` prefix objects after 30 days.
+    *   Defines WAFv2 Web ACL in `us-east-1` (using aliased provider) and associates it with CloudFront distribution.
 *   **CloudFront Function:** `append-index-html` function (created manually) associated with default behavior Viewer Request event to handle index file resolution.
 
 ## Tool Usage & Conventions
@@ -66,4 +68,5 @@
     *   **State Management:** Uses S3 backend (`robmclaughl-in-terraform-state` bucket) with DynamoDB locking (`terraform-locks` table).
     *   **Route53 Configuration:** Uses hardcoded Zone ID (`Z2PPIVE6CKK74T`) with `allow_overwrite = true` to manage existing DNS records.
     *   **ACM Validation:** Configures DNS validation records for SSL certificates with proper provider configuration.
-    *   **Module Structure:** Organized in modules (`route53`, `acm`, `cloudfront`, `s3`, `iam`) for maintainability. 
+    *   **Module Structure:** Organized in modules (`route53`, `acm`, `cloudfront`, `s3`, `iam`) for maintainability.
+    *   **WAF Configuration:** Defines `aws_wafv2_web_acl` scoped to `CLOUDFRONT` in `us-east-1` (using `aws.us_east_1` provider alias) and associates it via `web_acl_id` in CloudFront distribution. 

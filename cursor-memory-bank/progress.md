@@ -9,6 +9,7 @@
     *   GitHub Actions workflow successfully deploys PR branches to `.../branch/<slug>/`.
     *   Cleanup job removes environments on branch deletion.
     *   CloudFront Function correctly serves index files for preview URLs.
+*   **AWS WAF implemented:** Web ACL with managed rules associated with CloudFront via Terraform.
 *   Previous items (security hardening, CSP fix, IaC setup, CI/CD pipeline, UI components) remain complete.
 
 ## What Works
@@ -27,6 +28,7 @@
     *   S3 Lifecycle Rule for cleaning up old preview branches.
     *   CloudFront Function (`append-index-html`) serving index files.
     *   Security measures (OAC, logging, security headers, OIDC).
+    *   AWS WAF with managed rules filtering CloudFront traffic.
 
 ## What's Left to Build / Next Steps
 
@@ -85,5 +87,5 @@
 *   Security improvements implemented based on post-launch security review.
 *   Adjusted CloudFront Content Security Policy (`script-src`) to include `'unsafe-inline'` to ensure compatibility with Next.js inline scripts (April 5, 2025).
 *   **Implemented Ephemeral Previews:** Added multi-job workflow (prod, preview, cleanup), used Next.js `basePath`, S3 prefixes, Repository Secrets, and CloudFront Function for index files ([Current Date]).
-*   **Production Branch:** Confirmed and updated workflow to use `master` branch ([Current Date]).
+*   **Implemented AWS WAF:** Added `aws_wafv2_web_acl` resource in Terraform (configured in `us-east-1`), associated with CloudFront, using `AWSManagedRulesCommonRuleSet` and `AWSManagedRulesAmazonIpReputationList` ([Current Date]).
 *   **Production Branch:** Confirmed and updated workflow to use `master` branch ([Current Date]). 

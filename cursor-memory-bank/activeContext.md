@@ -5,7 +5,7 @@
 ## Current Focus
 
 *   **Primary:** Polishing the homepage UI to achieve a retro-futuristic CRT monitor aesthetic (effects restored).
-*   **Secondary:** Utilizing and refining the new ephemeral preview environment workflow.
+*   **Secondary:** Utilizing and refining the aws platform.
 *   **Next:** Implement baseline UI tests using Cypress.
 *   **Long-term Vision:** Evolve the page into a "lofi vibe generator" inspired by lofi.cafe, featuring:
     *   An integrated audio player.
@@ -29,12 +29,18 @@
     *   Resolved shell parsing errors (`unexpected EOF`) in final `echo` command of preview job by switching to `printf` and adjusting quoting.
 *   Implemented CloudFront Function (`index_rewrite`) via Terraform to resolve `AccessDenied` errors when accessing subdirectory paths without explicitly specifying `index.html` (e.g., `/branch/staging-env/`).
 *   Configured the CloudFront distribution (via Terraform) to associate the `index_rewrite` function only with specific path patterns defined in a variable (`var.index_rewrite_paths`, initially `["/branch/*"]`), rather than applying it globally.
+*   **(NEW) Implemented AWS WAF:**
+    *   Defined `aws_wafv2_web_acl` in Terraform (`terraform/main.tf`) scoped to `CLOUDFRONT`.
+    *   Configured the ACL in `us-east-1` region using the aliased provider (`aws.us_east_1`).
+    *   Added AWS Managed Rules: `AWSManagedRulesCommonRuleSet` and `AWSManagedRulesAmazonIpReputationList`.
+    *   Associated the Web ACL with the CloudFront distribution via Terraform (`web_acl_id` in `terraform/modules/cloudfront/main.tf`).
 *   (Previous changes: Resolved CSP issue, restored CRT effects, security improvements, Terraform fixes).
 
 ## Immediate Next Steps
 
 1.  **✅ CloudFront Subdirectory Index Handling:** Implemented CloudFront Function via Terraform.
-2.  **Next: Baseline Testing:** Implement basic functional UI tests using Cypress.
+2.  **✅ AWS WAF Implementation:** Added WAF with managed rules via Terraform.
+3.  **Next: Baseline Testing:** Implement basic functional UI tests using Cypress.
 
 ## Active Decisions & Considerations
 
@@ -43,6 +49,8 @@
 *   **CloudFront Function for Index Files:** Relying on a CloudFront Function to serve `index.html` for directory-like requests.
 *   **CloudFront Function for Index Rewrites:** Using a CloudFront Function associated with specific cache behaviors (driven by the `index_rewrite_paths` Terraform variable) is the chosen method for handling subdirectory index files. This provides flexibility to add more paths later without modifying the function code.
 *   **CSP `'unsafe-inline'`:** Currently allowing `'unsafe-inline'` scripts via CloudFront CSP as a necessary workaround for Next.js compatibility with CDN-level headers. More secure alternatives (hashes, nonces) are complex to implement in this setup.
+*   **WAF Configuration:** Using AWS WAF with `AWSManagedRulesCommonRuleSet` and `AWSManagedRulesAmazonIpReputationList` associated with CloudFront for baseline protection, anticipating future backend expansion.
+*   **WAF Region Requirement:** WAF ACLs associated with CloudFront MUST be created in `us-east-1`.
 *   **No Analytics:** Analytics implementation is deferred.
 *   (Previous decisions: CSP `unsafe-inline`, no analytics/dark mode/blog, core focus on generator concept).
 
@@ -52,9 +60,10 @@
 *   Use GitHub Actions for multi-job CI/CD (prod deploy, preview deploy, preview cleanup).
 *   Use Repository Secrets for credentials shared across CI jobs.
 *   Use CloudFront Functions for edge request modifications (e.g., default index file).
+*   Use AWS WAF with Managed Rules for baseline web application security at the edge (CloudFront).
 *   (Previous patterns: Next.js SSG, Tailwind, shadcn/ui, Terraform IaC, OIDC).
 
-## Learnings & Insights (Recent - Preview Envs)
+## Learnings & Insights (Recent - Preview Envs & WAF)
 
 *   GitHub Actions jobs only inherit secrets available at their scope (Repository or specified Environment).
 *   PNPM requires lockfile (`pnpm-lock.yaml`) commitment and consistent versions between local dev and CI (`pnpm/action-setup` version).
@@ -65,5 +74,6 @@
 *   **CloudFront Functions for URI Rewrites:** CloudFront Functions provide a lightweight, edge-based solution to modify requests, such as appending `index.html` to directory-like URIs, before they reach the origin (S3). This avoids `AccessDenied` errors when S3 is not configured for website hosting (which is correct when using CloudFront OAC).
 *   **Targeted Function Association:** Associating CloudFront Functions with specific `ordered_cache_behavior` blocks (based on path patterns) instead of the `default_cache_behavior` allows for precise control over where the function logic is applied.
 *   **Terraform Dynamic Blocks:** Using `dynamic "ordered_cache_behavior"` with `for_each` allows creating multiple cache behaviors based on a list variable, making the configuration flexible and maintainable for multiple path patterns requiring the same function.
-*   **CSP and Next.js:** Implementing strict Content Security Policies (especially `script-src 'self'`) via CDN headers (like CloudFront Response Headers Policy) can conflict with Next.js's reliance on inline scripts for hydration/functionality, causing rendering failures (e.g., blank screens after initial load).
+*   **CSP and Next.js:** Implementing strict Content Security Policies (especially `script-src 'self'`) via CDN headers (like CloudFront Response Headers Policy) can conflict with Next.js's reliance on inline scripts for hydration/functionality, causing rendering failures (e.g., blank screens after initial load). Requires `unsafe-inline`.
+*   **(NEW) AWS WAF Scope/Region:** WAFv2 Web ACLs intended for CloudFront (`scope = "CLOUDFRONT"`) MUST be created in the `us-east-1` region, requiring explicit provider configuration in Terraform if the default provider is in a different region.
 *   (Previous learnings: CSP/Next.js, troubleshooting, AWS security, Terraform resource management, HeroBackground optimizations, IaC/CI/CD setup benefits). 
