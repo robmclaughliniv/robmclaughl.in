@@ -20,7 +20,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 8 # Or specify the version used in your project
+          version: 10 # Or specify the version used in your project
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
