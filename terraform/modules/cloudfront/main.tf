@@ -1,3 +1,13 @@
+# Keep the existing Origin Access Identity (OAI) to prevent deletion errors
+resource "aws_cloudfront_origin_access_identity" "oai" {
+  comment = "OAI for ${var.bucket_name} (preserved for migration)"
+  
+  # Prevent Terraform from trying to delete this resource
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
 # Create a Response Headers Policy for security headers
 resource "aws_cloudfront_response_headers_policy" "security_headers" {
   name = "security-headers-policy"
@@ -58,6 +68,9 @@ resource "aws_cloudfront_distribution" "website" {
     domain_name              = var.bucket_regional_domain_name
     origin_id                = "S3-${var.bucket_name}"
     origin_access_control_id = aws_cloudfront_origin_access_control.oac.id # Use OAC instead of OAI
+    
+    # Note: We're not using s3_origin_config with OAI anymore, but keeping the OAI resource
+    # to prevent deletion errors during migration
   }
 
   enabled             = true
@@ -114,8 +127,11 @@ resource "aws_cloudfront_distribution" "website" {
     for_each = var.logs_bucket != "" ? [1] : []
     content {
       include_cookies = false
-      bucket          = "${var.logs_bucket}.s3.amazonaws.com"
+      bucket          = "${var.logs_bucket}.s3.${data.aws_region.current.name}.amazonaws.com"
       prefix          = var.logs_prefix
     }
   }
 }
+
+# Get current AWS region for constructing the logs bucket domain name
+data "aws_region" "current" {}

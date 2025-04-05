@@ -42,21 +42,19 @@ terraform {
   }
 }
 
-# S3 bucket for website content
+# Phase 1: Create S3 buckets without bucket policies
 module "website_bucket" {
   source = "./modules/s3"
   bucket_name = "robmclaughl-in-website-bucket"
-  cloudfront_distribution_arn = module.cloudfront.distribution_arn
-  
-  # Note: This creates a circular dependency, so we need to use depends_on
-  depends_on = [module.cloudfront]
+  # CloudFront ARN will be applied in Phase 3
 }
 
 # S3 bucket for CloudFront logs
 module "logs_bucket" {
   source = "./modules/s3"
   bucket_name = "robmclaughl-in-logs-bucket"
-  cloudfront_distribution_arn = module.cloudfront.distribution_arn
+  is_logs_bucket = true  # Enable ACLs for CloudFront logging
+  # CloudFront ARN will be applied in Phase 3
 }
 
 # ACM Certificate
@@ -67,6 +65,7 @@ module "acm" {
   zone_id = module.route53.zone_id
   
   providers = {
+    aws           = aws # Explicitly pass the default provider
     aws.us_east_1 = aws.us_east_1
   }
 }
@@ -87,6 +86,7 @@ module "cloudfront" {
 module "route53" {
   source = "./modules/route53"
   domain_name = "robmclaughl.in"
+  zone_id     = "Z2PPIVE6CKK74T" # Pass the correct Zone ID directly (without trailing X)
   cloudfront_distribution_domain_name = module.cloudfront.distribution_domain_name
   cloudfront_distribution_zone_id = module.cloudfront.distribution_zone_id
 }
@@ -100,6 +100,35 @@ module "github_actions" {
   cloudfront_distribution_id = module.cloudfront.distribution_id
   github_owner = "robmclaughliniv" # Update with your actual GitHub username
   github_repo = "robmclaughl.in" # Update with your actual repository name
+  
+  # Ensure this runs after the buckets, CloudFront, and bucket policies are created
+  depends_on = [
+    module.website_bucket,
+    module.logs_bucket,
+    module.cloudfront,
+    module.website_bucket_policy,
+    module.logs_bucket_policy
+  ]
+}
+
+# Phase 3: Apply bucket policies with CloudFront ARN
+module "website_bucket_policy" {
+  source = "./modules/s3"
+  bucket_name = module.website_bucket.bucket_name
+  cloudfront_distribution_arn = module.cloudfront.distribution_arn
+  
+  # Ensure this runs after the buckets and CloudFront are created
+  depends_on = [module.website_bucket, module.cloudfront]
+}
+
+module "logs_bucket_policy" {
+  source = "./modules/s3"
+  bucket_name = module.logs_bucket.bucket_name
+  cloudfront_distribution_arn = module.cloudfront.distribution_arn
+  is_logs_bucket = true  # Enable ACLs for CloudFront logging
+  
+  # Ensure this runs after the buckets and CloudFront are created
+  depends_on = [module.logs_bucket, module.cloudfront]
 }
 
 # Output values

@@ -1,15 +1,9 @@
-# Get the existing Route53 hosted zone for the domain
-data "aws_route53_zone" "zone" {
-  name = var.domain_name
-  # If the zone is private, set this to true
-  private_zone = false
-}
-
 # Create A record for apex domain pointing to CloudFront
 resource "aws_route53_record" "apex" {
-  zone_id = data.aws_route53_zone.zone.zone_id
-  name    = var.domain_name
-  type    = "A"
+  zone_id         = var.zone_id
+  name            = var.domain_name
+  type            = "A"
+  allow_overwrite = true
 
   alias {
     name                   = var.cloudfront_distribution_domain_name
@@ -20,9 +14,10 @@ resource "aws_route53_record" "apex" {
 
 # Create A record for www subdomain pointing to CloudFront
 resource "aws_route53_record" "www" {
-  zone_id = data.aws_route53_zone.zone.zone_id
-  name    = "www.${var.domain_name}"
-  type    = "A"
+  zone_id         = var.zone_id
+  name            = "www.${var.domain_name}"
+  type            = "A"
+  allow_overwrite = true
 
   alias {
     name                   = var.cloudfront_distribution_domain_name
