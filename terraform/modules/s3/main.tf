@@ -140,3 +140,35 @@ resource "aws_s3_bucket_policy" "bucket_policy_oac" {
   bucket = local.bucket_id
   policy = data.aws_iam_policy_document.s3_policy_oac[0].json
 }
+
+# Add lifecycle configuration using the dedicated resource
+resource "aws_s3_bucket_lifecycle_configuration" "website_lifecycle" {
+  # Apply this configuration regardless of whether the bucket was created or already existed
+  bucket = local.bucket_id 
+
+  rule {
+    id      = "ExpirePreviewBranches"
+    status  = "Enabled"
+
+    filter {
+      prefix = "branch/" # Apply to objects under the branch/ prefix
+    }
+
+    expiration {
+      days = 30 # Expire objects after 30 days
+    }
+
+    # Recommended for buckets with versioning to clean up non-current versions
+    noncurrent_version_expiration {
+      noncurrent_days = 30 # Expire non-current versions after 30 days
+    }
+
+    # Recommended to clean up incomplete multipart uploads
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7 
+    }
+  }
+
+  # Add depends_on if the bucket resource is conditionally created
+  depends_on = [aws_s3_bucket.website]
+}

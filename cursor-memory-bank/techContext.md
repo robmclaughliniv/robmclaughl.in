@@ -6,16 +6,17 @@
 
 *   **Frontend:** Next.js 13 (App Router), React, TypeScript, Tailwind CSS, shadcn/ui components.
 *   **Backend:** N/A (Static site generation for MVP).
-*   **Infrastructure:** AWS (S3 for hosting, CloudFront for CDN & HTTPS, Route 53 for DNS, ACM for SSL certificates). Infrastructure as Code managed by Terraform.
+*   **Infrastructure:** AWS (S3 for hosting, CloudFront for CDN & HTTPS, Route 53 for DNS, ACM for SSL certificates, CloudFront Functions for edge logic). Infrastructure as Code managed by Terraform.
 *   **CI/CD:** GitHub Actions.
 *   **Other Key Technologies:** AWS CLI (for deployment scripts).
 
 ## Development Environment Setup
 
-*   **Core Tools:** Node.js, pnpm (inferred from `pnpm-lock.yaml`).
-*   **Setup:** Clone repository, run `pnpm install` to install dependencies.
+*   **Core Tools:** Node.js, pnpm (`v10.7.1` used locally and in CI).
+*   **Setup:** Clone repository, run `pnpm install` to install dependencies. Commit `pnpm-lock.yaml`.
 *   **Running Locally:** `pnpm run dev` (standard Next.js command found in `package.json`).
-*   **Environment Variables:** Specific variables not detailed yet, but may be needed for future AWS integration or API keys.
+*   **Environment Variables:**
+    *   `BASE_PATH`: Used during `deploy-preview` CI job build step to configure Next.js `basePath` (e.g., `/branch/<branch-slug>`). Not used for local dev or production builds.
 
 ## Technical Constraints
 
@@ -27,12 +28,31 @@
 
 ## Key Dependencies
 
-*   **Framework:** Next.js (`^15.1.0`)
+*   **Framework:** Next.js (`^15.1.0` as per package.json, `output: 'export'`, uses `basePath` for previews)
 *   **UI Library:** React (`^18.2.0`)
 *   **Styling:** Tailwind CSS (`^3.4.17`), class-variance-authority, clsx, tailwind-merge, tailwindcss-animate.
 *   **Components:** Numerous `@radix-ui/*` and `shadcn/ui` components (see `package.json` for full list, e.g., `lucide-react` for icons).
 *   **Infrastructure:** AWS Services (S3, CloudFront, Route53, ACM).
 *   **Deployment:** GitHub Actions, Terraform.
+
+## Tool Usage & Conventions
+
+*   **Version Control:** Git, hosted on GitHub. Production branch: `master`. Feature branches used for Pull Requests and preview environments.
+*   **Package Manager:** `pnpm` (`v10.7.1`). Use `pnpm install`, `pnpm run dev`, `pnpm run build`. `pnpm-lock.yaml` is committed.
+*   **Linters/Formatters:** TypeScript is used. Assumed standard tools like ESLint/Prettier configured.
+*   **Testing:** Not implemented yet (Next step: Cypress).
+*   **Build Process:** `pnpm run build` (uses `next build --no-lint`). Generates static assets in `out/` directory. `BASE_PATH` env var used for preview builds.
+*   **Deployment:** Automated via GitHub Actions workflow (`.github/workflows/deploy.yml`):
+    *   **Triggers:** `push` to `master` (production), `pull_request` (preview), `delete` branch (cleanup).
+    *   **Jobs:** `deploy-prod`, `deploy-preview`, `cleanup-preview`.
+    *   **Authentication:** Uses OIDC for secure AWS role assumption.
+    *   **Secrets:** Uses Repository Secrets (`AWS_DEPLOY_ROLE_ARN`, `CLOUDFRONT_DISTRIBUTION_ID`, `AWS_S3_BUCKET_NAME`, `DOMAIN_NAME`).
+    *   **Process:** Installs deps (`pnpm i --frozen-lockfile`), builds, syncs `out/` to S3 (root for prod, `branch/<slug>/` for preview), invalidates CloudFront, posts PR comment (previews), removes S3 prefix (cleanup).
+*   **Terraform Configuration:**
+    *   Manages AWS resources (S3, CloudFront, Route53, ACM, IAM Role).
+    *   Uses S3 backend with DynamoDB locking.
+    *   Includes S3 lifecycle rule to expire `branch/` prefix objects after 30 days.
+*   **CloudFront Function:** `append-index-html` function (created manually) associated with default behavior Viewer Request event to handle index file resolution.
 
 ## Tool Usage & Conventions
 
