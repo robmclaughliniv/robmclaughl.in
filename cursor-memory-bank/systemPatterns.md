@@ -4,63 +4,96 @@
 
 ## System Architecture Overview
 
-*   **Frontend Application:** Single-page application built with Next.js 13 (App Router). Primarily uses Static Site Generation (SSG) for the MVP, resulting in static HTML, CSS, and JS assets.
-*   **Hosting:** Static assets hosted on AWS S3.
-*   **Delivery:** AWS CloudFront CDN serves assets globally, provides HTTPS via ACM certificate, and points to the S3 origin using Origin Access Control (OAC). Security headers are applied via a CloudFront Response Headers Policy, and access logging is enabled.
+*   **Frontend Application:** Single-page application built with Next.js (App Router), using Static Site Generation (`output: 'export'`). Uses `basePath` configuration for preview environment deployments.
+*   **Hosting:** Static assets hosted on AWS S3. Production files at root, preview branches under `branch/<branch-slug>/` prefix.
+*   **Delivery:** AWS CloudFront CDN serves assets globally, provides HTTPS via ACM certificate, points to the S3 origin using Origin Access Control (OAC). Security headers applied via CloudFront Response Headers Policy. Access logging enabled. A CloudFront Function (`append-index-html`) is associated with the Viewer Request event to handle serving index files for directory paths.
 *   **DNS:** AWS Route 53 manages the `robmclaughl.in` domain, pointing to the CloudFront distribution.
-*   **Infrastructure Management:** All AWS resources are defined and managed using Terraform (Infrastructure as Code).
-*   **Deployment Pipeline:** Automated builds and deployments triggered by pushes to the `main` branch via GitHub Actions.
+*   **Infrastructure Management:** All AWS resources defined and managed using Terraform (IaC). Includes S3 Lifecycle Policy to expire preview branches (objects under `branch/` prefix) after 30 days.
+*   **Deployment Pipeline:** GitHub Actions workflow (`.github/workflows/deploy.yml`) with separate jobs for:
+    *   `deploy-prod`: Triggers on push to `master`, deploys build output to S3 root.
+    *   `deploy-preview`: Triggers on `pull_request` events, builds with `basePath`, deploys to S3 `branch/<branch-slug>/` prefix, posts comment to PR.
+    *   `cleanup-preview`: Triggers on non-`master` branch `delete`, removes S3 `branch/<branch-slug>/` prefix.
 
 ```mermaid
 graph TD
     subgraph "AWS Cloud"
         R53[Route 53: robmclaughl.in] --> CF[CloudFront Distribution];
-        CF -- OAC --> S3[S3 Bucket: Static Files];
+        CF -- Viewer Request --> CFFunc[CF Function: append-index-html];
+        CFFunc -- Modified URI --> CF;
+        CF -- OAC --> S3[S3 Bucket: Static Files
+          - /index.html
+          - /_next/...
+          - /branch/slug-1/index.html
+          - /branch/slug-1/_next/...
+          - /branch/slug-2/index.html
+          - ...];
         ACM[ACM Certificate] -- Attached --> CF;
     end
 
     subgraph "Development & Deployment"
-        User[Developer] -- Push --> GitHub[GitHub Repo];
-        GitHub -- Trigger --> GHA[GitHub Actions CI/CD];
-        GHA -- Deploy --> S3;
-        GHA -- Invalidate --> CF;
-        GHA -- Assumes Role via OIDC --> AWS_IAM[AWS IAM Role];
+        User[Developer] -- Push PR Branch --> GitHub[GitHub Repo];
+        GitHub -- Trigger PR --> GHA_Preview[GHA: deploy-preview];
+        GHA_Preview -- Build w/ basePath --> Build[Next.js Build Output];
+        GHA_Preview -- Assumes Role via OIDC --> AWS_IAM[AWS IAM Role];
+        GHA_Preview -- Deploy --> S3;
+        GHA_Preview -- Invalidate --> CF;
+        GHA_Preview -- Comment --> GitHub;
+
+        User[Developer] -- Push master --> GitHub;
+        GitHub -- Trigger Push --> GHA_Prod[GHA: deploy-prod];
+        GHA_Prod -- Build --> Build;
+        GHA_Prod -- Assumes Role --> AWS_IAM;
+        GHA_Prod -- Deploy --> S3;
+        GHA_Prod -- Invalidate --> CF;
+
+        User[Developer] -- Delete PR Branch --> GitHub;
+        GitHub -- Trigger Delete --> GHA_Cleanup[GHA: cleanup-preview];
+        GHA_Cleanup -- Assumes Role --> AWS_IAM;
+        GHA_Cleanup -- Remove --> S3;
+        GHA_Cleanup -- Invalidate --> CF;
+
         Terraform[Terraform Code] -- Defines --> R53;
         Terraform -- Defines --> CF;
         Terraform -- Defines --> S3;
         Terraform -- Defines --> ACM;
         Terraform -- Defines --> AWS_IAM;
+        # Note: CF Function created manually/outside Terraform for now
     end
 
-    Client[User Browser] -- HTTPS --> R53;
+    Client[User Browser] -- HTTPS /branch/slug-1/ --> R53;
 
     style S3 fill:#f9f,stroke:#333,stroke-width:2px
     style CF fill:#ccf,stroke:#333,stroke-width:2px
     style R53 fill:#cfc,stroke:#333,stroke-width:2px
-    style GHA fill:#fcf,stroke:#333,stroke-width:2px
+    style GHA_Preview fill:#fcf,stroke:#333,stroke-width:2px
+    style GHA_Prod fill:#fcf,stroke:#333,stroke-width:2px
+    style GHA_Cleanup fill:#fcf,stroke:#333,stroke-width:2px
     style Terraform fill:#fec,stroke:#333,stroke-width:2px
+    style CFFunc fill:#cff,stroke:#333,stroke-width:2px
 ```
 
 ## Key Technical Decisions
 
-*   **Framework Choice (Next.js):** Chosen for performance (SSR/SSG), SEO benefits, TypeScript support, and React ecosystem. App Router used for modern features.
-*   **Styling (Tailwind CSS + shadcn/ui):** Utility-first CSS for rapid development and custom styling. Shadcn/ui provides accessible, pre-built components compatible with Tailwind.
-*   **Hosting (AWS S3 + CloudFront):** Provides scalable, secure, and performant static site hosting with global CDN delivery, HTTPS, security headers (including CSP requiring `script-src 'unsafe-inline'` for Next.js compatibility), and access logging.
-*   **Infrastructure as Code (Terraform):** Ensures reproducible, version-controlled, and automated management of AWS resources.
-    *   **Route53 Management:** Uses hardcoded Zone ID with `allow_overwrite = true` to safely manage existing DNS records.
-    *   **S3 Backend:** Stores Terraform state in S3 with DynamoDB locking for team collaboration and state consistency.
-*   **CI/CD (GitHub Actions):** Automates the build and deployment process for efficiency and consistency.
-*   **Secure AWS Authentication (OIDC):** Avoids storing long-lived AWS credentials in GitHub by using OpenID Connect for temporary role assumption.
+*   **Framework Choice (Next.js):** Chosen for performance (SSG via `output: 'export'`), SEO benefits, TypeScript support, and React ecosystem. App Router used. `basePath` configuration used for preview deployments.
+*   **Styling (Tailwind CSS + shadcn/ui):** Utility-first CSS for rapid development and custom styling.
+*   **Hosting (AWS S3 + CloudFront):** Provides scalable, secure, performant static site hosting. OAC restricts direct S3 access. CloudFront Function handles default index document resolution.
+*   **Infrastructure as Code (Terraform):** Ensures reproducible, version-controlled infrastructure. Includes S3 lifecycle rule for preview cleanup.
+*   **CI/CD (GitHub Actions):** Multi-job workflow for production, preview deployment, and cleanup.
+    *   Triggers based on `push` (master), `pull_request`, and `delete` events.
+    *   Uses Repository Secrets for AWS credentials.
+*   **Secure AWS Authentication (OIDC):** Using OpenID Connect for temporary role assumption from GitHub Actions.
 
 ## Design Patterns in Use
 
-*   **Static Site Generation (SSG):** Next.js pattern used to pre-render pages to static HTML at build time for maximum performance.
+*   **Static Site Generation (SSG):** Next.js `output: 'export'`. Pre-rendering pages to static HTML.
+*   **Ephemeral Preview Environments:** Using Git branches, CI/CD, S3 prefixes, Next.js `basePath`, and PR comments to create temporary review environments.
+*   **Infrastructure as Code (IaC):** Managing AWS infrastructure via Terraform.
+*   **CI/CD:** Automating build, deployment, and cleanup (GitHub Actions).
+*   **CloudFront Edge Logic:** Using CloudFront Functions to modify requests at the edge (URL rewriting for index files).
 *   **Utility-First CSS:** Tailwind CSS approach for styling.
 *   **Component-Based Architecture:** Standard React pattern for UI development. Leveraging shadcn/ui components.
-*   **Infrastructure as Code (IaC):** Managing infrastructure through code (Terraform).
-    *   **Resource Adoption Pattern:** Using `allow_overwrite = true` and explicit resource IDs to allow Terraform to manage pre-existing resources.
-    *   **Remote State Pattern:** Using S3 backend for state storage and DynamoDB for state locking.
-*   **Continuous Integration/Continuous Deployment (CI/CD):** Automating build and deployment pipeline (GitHub Actions).
+*   **Remote State Pattern:** Using S3 backend for state storage and DynamoDB for state locking.
+*   **OIDC:** Using OpenID Connect for temporary role assumption.
 
 ## Component Relationships (MVP)
 
@@ -71,8 +104,11 @@ graph TD
 
 ## Critical Implementation Paths
 
-*   **User Request Flow:** User visits `robmclaughl.in` -> DNS resolves via Route 53 to CloudFront -> CloudFront serves cached static HTML/CSS/JS from edge location (or fetches from S3 origin if not cached) -> Page renders in browser.
-*   **Deployment Flow:** Developer pushes code to `main` branch -> GitHub Actions workflow triggers -> Installs dependencies (`pnpm install`) -> Builds Next.js app (`pnpm run build`) -> Assumes AWS IAM role via OIDC -> Uploads static build output to S3 -> Invalidates CloudFront cache.
+*   **User Request Flow (Production):** User visits `robmclaughl.in` -> DNS (Route53) -> CloudFront -> (Optional: CF Function sees `/`, rewrites to `/index.html`) -> S3 Origin (OAC) fetches `/index.html` -> Page Renders.
+*   **User Request Flow (Preview):** User visits `robmclaughl.in/branch/slug-1/` -> DNS -> CloudFront -> CF Function sees `/branch/slug-1/`, rewrites to `/branch/slug-1/index.html` -> S3 Origin (OAC) fetches `branch/slug-1/index.html` -> Page Renders.
+*   **Production Deployment Flow:** Push to `master` -> `deploy-prod` job -> Checkout -> Install -> Build (no `basePath`) -> Assume Role -> Sync `out/` to S3 root -> Invalidate CF `/*`.
+*   **Preview Deployment Flow:** Open/Update PR -> `deploy-preview` job -> Checkout -> Install -> Sanitize Branch Name (`slug`) -> Build (with `BASE_PATH=/branch/slug`) -> Assume Role -> Sync `out/` to S3 `branch/slug/` -> Invalidate CF `/branch/slug/*` -> Post PR Comment.
+*   **Preview Cleanup Flow:** Delete PR branch -> `cleanup-preview` job -> Sanitize Branch Name (`slug`) -> Assume Role -> Remove S3 `branch/slug/` -> Invalidate CF `/branch/slug/*`.
 
 ## Data Management (MVP)
 

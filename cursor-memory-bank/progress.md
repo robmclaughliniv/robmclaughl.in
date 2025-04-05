@@ -2,15 +2,14 @@
 
 *This document tracks the overall status of the project, what components are functional, what remains to be built, known issues, and the evolution of key decisions.*
 
-## Current Status (as of April 5, 2025)
+## Current Status (as of [Current Date])
 
-*   Next.js application prototype completed and deployed.
-*   Core UI components (including custom ones like `HeroBackground`) implemented with lo-fi theme and responsiveness.
-*   Infrastructure as Code (Terraform) configuration created and successfully applied for AWS deployment (S3, CloudFront, Route53, IAM).
-*   CI/CD pipeline set up using GitHub Actions and operational.
-*   Site is live at `robmclaughl.in`.
-*   Security review completed and improvements implemented.
-*   Resolved post-deployment rendering issue caused by Content Security Policy.
+*   Production site live at `robmclaughl.in`.
+*   **Ephemeral Preview Environments implemented and operational:**
+    *   GitHub Actions workflow successfully deploys PR branches to `.../branch/<slug>/`.
+    *   Cleanup job removes environments on branch deletion.
+    *   CloudFront Function correctly serves index files for preview URLs.
+*   Previous items (security hardening, CSP fix, IaC setup, CI/CD pipeline, UI components) remain complete.
 
 ## What Works
 
@@ -21,10 +20,13 @@
     *   Custom components: `CoffeeCup`, `Waveform`, `HeroBackground` (with video/image background, CRT effects, optimizations).
     *   Social links implemented.
 *   **Infrastructure & Deployment:**
-    *   Terraform scripts for AWS resources (S3, CloudFront, Route53, ACM, IAM Role) successfully provisioned infrastructure.
-    *   GitHub Actions workflow for CI/CD is functional and deploys changes.
-    *   Successful initial deployment to `robmclaughl.in`.
-    *   Security improvements implemented (OAC, logging, security headers, etc.).
+    *   Terraform scripts for AWS resources (S3, CloudFront, Route53, ACM, IAM Role, S3 Lifecycle Rule).
+    *   GitHub Actions workflow for CI/CD (`deploy-prod`, `deploy-preview`, `cleanup-preview`) operational.
+    *   Production deployment to `robmclaughl.in`.
+    *   Ephemeral preview deployment to `robmclaughl.in/branch/<slug>/` including PR comments and cleanup.
+    *   S3 Lifecycle Rule for cleaning up old preview branches.
+    *   CloudFront Function (`append-index-html`) serving index files.
+    *   Security measures (OAC, logging, security headers, OIDC).
 
 ## What's Left to Build / Next Steps
 
@@ -33,6 +35,8 @@
 *   **Content & Refinement:**
     *   Ongoing performance monitoring and optimization.
     *   Further UI/UX enhancements (e.g., light/dark mode toggle).
+*   **Infrastructure:**
+    *   Consider managing the CloudFront Function (`append-index-html`) via Terraform for full IaC coverage (currently manual).
 *   **Future Phases (Post-MVP):**
     *   Add analytics (optional).
     *   Consider blog functionality.
@@ -42,6 +46,7 @@
 
 *   Baseline UI tests are not yet implemented.
 *   Content may require ongoing refinement based on feedback or evolving requirements.
+*   CloudFront Function `append-index-html` is managed manually outside of Terraform.
 
 ## Content Security Policy Resolution (April 5, 2025)
 
@@ -78,4 +83,7 @@
 *   Adopted Next.js App Router, TailwindCSS, shadcn/ui, Terraform, AWS (S3/CloudFront), and GitHub Actions as key technologies. See `techContext.md` and `systemPatterns.md`.
 *   Emphasis on Infrastructure as Code (Terraform) and automated CI/CD from the start.
 *   Security improvements implemented based on post-launch security review.
-*   Adjusted CloudFront Content Security Policy (`script-src`) to include `'unsafe-inline'` to ensure compatibility with Next.js inline scripts (April 5, 2025). 
+*   Adjusted CloudFront Content Security Policy (`script-src`) to include `'unsafe-inline'` to ensure compatibility with Next.js inline scripts (April 5, 2025).
+*   **Implemented Ephemeral Previews:** Added multi-job workflow (prod, preview, cleanup), used Next.js `basePath`, S3 prefixes, Repository Secrets, and CloudFront Function for index files ([Current Date]).
+*   **Troubleshooting Previews:** Resolved issues related to PNPM version mismatch, tarball integrity, secret scoping, and CloudFront index file serving ([Current Date]).
+*   **Production Branch:** Confirmed and updated workflow to use `master` branch ([Current Date]). 
