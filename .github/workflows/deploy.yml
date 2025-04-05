@@ -40,7 +40,7 @@ jobs:
         # Ensure this version matches your project's lock file
         uses: pnpm/action-setup@v3
         with:
-          version: 8
+          version: 10.7.1
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -87,14 +87,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      # ADD THIS STEP for debugging
-      - name: List files in workspace root
-        run: ls -la
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: 8
+          version: 10.7.1
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
