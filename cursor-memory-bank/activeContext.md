@@ -1,18 +1,22 @@
 # Active Context
 
-*This document tracks the current focus, recent activities, immediate next steps, and important decisions or patterns relevant to the ongoing work. It's a snapshot of the project's current state. **Updated: April 4, 2025 (Post-Launch)**.*
+*This document tracks the current focus, recent activities, immediate next steps, and important decisions or patterns relevant to the ongoing work. It's a snapshot of the project's current state. **Updated: April 5, 2025 (Post-CSP Fix)**.*
 
 ## Current Focus
 
-*   **Primary:** Polishing the homepage UI to achieve a retro-futuristic CRT monitor aesthetic.
+*   **Primary:** Polishing the homepage UI to achieve a retro-futuristic CRT monitor aesthetic (effects restored).
 *   **Long-term Vision:** Evolve the page into a "lofi vibe generator" inspired by lofi.cafe, featuring:
     *   An integrated audio player.
     *   AI-driven visuals.
     *   Clickable "channels" to change music and visuals.
     *   Links/elements connecting to subdomains showcasing web experiments.
 
-## Recent Changes (Since March 23, 2025)
+## Recent Changes (Since April 4, 2025)
 
+*   Troubleshot and resolved a "flash then black screen" issue occurring after deployment.
+*   Identified the cause as the CloudFront Content Security Policy (CSP) blocking necessary inline scripts used by Next.js.
+*   Temporarily relaxed the CSP `script-src` directive to include `'unsafe-inline'` via Terraform to allow the site to render correctly.
+*   Restored CRT visual effects code that was temporarily commented out during troubleshooting.
 *   Successful initial deployment of the site to `robmclaughl.in`.
 *   Refined the CRT visual effects applied to the background video component (`HeroBackground`).
 *   Implemented security improvements following post-launch security review.
@@ -32,6 +36,7 @@
 
 ## Active Decisions & Considerations
 
+*   **CSP `'unsafe-inline'`:** Currently allowing `'unsafe-inline'` scripts via CloudFront CSP as a necessary workaround for Next.js compatibility with CDN-level headers. More secure alternatives (hashes, nonces) are complex to implement in this setup.
 *   **No Analytics:** Analytics implementation is deferred.
 *   **No Dark Mode (Yet):** A theme toggle is not an immediate priority.
 *   **No Blog:** Blog functionality is out of scope for the current focus.
@@ -46,6 +51,9 @@
 
 ## Learnings & Insights (Recent)
 
+*   **CSP and Next.js:** Implementing strict Content Security Policies (especially `script-src 'self'`) via CDN headers (like CloudFront Response Headers Policy) can conflict with Next.js's reliance on inline scripts for hydration/functionality, causing rendering failures (e.g., blank screens after initial load).
+*   **Troubleshooting Strategy:** When deployed behavior differs from local, check browser console for errors (especially CSP violations), examine network requests, and consider differences in the deployed environment (like HTTP headers set by CDN).
+*   **CSP Workaround:** Using `script-src 'unsafe-inline'` is a common workaround for static sites using frameworks like Next.js when CSP headers are applied at the edge, but it carries security implications.
 *   Security best practices for AWS static site hosting include using OAC instead of OAI, implementing security headers, and enabling access logging.
 *   Refining CRT effects requires careful tuning of CSS filters, overlays, and potentially shaders for optimal visual appeal and performance.
 *   When managing existing AWS resources with Terraform:

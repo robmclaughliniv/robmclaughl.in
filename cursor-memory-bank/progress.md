@@ -2,7 +2,7 @@
 
 *This document tracks the overall status of the project, what components are functional, what remains to be built, known issues, and the evolution of key decisions.*
 
-## Current Status (as of April 4, 2025)
+## Current Status (as of April 5, 2025)
 
 *   Next.js application prototype completed and deployed.
 *   Core UI components (including custom ones like `HeroBackground`) implemented with lo-fi theme and responsiveness.
@@ -10,6 +10,7 @@
 *   CI/CD pipeline set up using GitHub Actions and operational.
 *   Site is live at `robmclaughl.in`.
 *   Security review completed and improvements implemented.
+*   Resolved post-deployment rendering issue caused by Content Security Policy.
 
 ## What Works
 
@@ -17,7 +18,7 @@
     *   Next.js project structure (App Router).
     *   Lo-fi themed UI with TailwindCSS and shadcn/ui.
     *   Responsive layout.
-    *   Custom components: `CoffeeCup`, `Waveform`, `HeroBackground` (with video/image background, effects, optimizations).
+    *   Custom components: `CoffeeCup`, `Waveform`, `HeroBackground` (with video/image background, CRT effects, optimizations).
     *   Social links implemented.
 *   **Infrastructure & Deployment:**
     *   Terraform scripts for AWS resources (S3, CloudFront, Route53, ACM, IAM Role) successfully provisioned infrastructure.
@@ -41,7 +42,13 @@
 
 *   Baseline UI tests are not yet implemented.
 *   Content may require ongoing refinement based on feedback or evolving requirements.
-*   ~~Terraform Route53 record management issue~~ (Fixed April 4, 2025 - See "Recent Terraform Improvements" section).
+
+## Content Security Policy Resolution (April 5, 2025)
+
+*   A post-deployment issue ("flash then black screen") was traced to the Content Security Policy (CSP) set via CloudFront Response Headers Policy.
+*   The `script-src 'self'` directive was blocking essential inline scripts used by Next.js for hydration and functionality.
+*   The issue was resolved by modifying the CSP in Terraform (`terraform/modules/cloudfront/main.tf`) to include `'unsafe-inline'` in the `script-src` directive (`script-src 'self' 'unsafe-inline';`).
+*   This allows the site to function correctly but represents a trade-off, reducing protection against potential XSS attacks involving inline scripts.
 
 ## Recent Security Improvements (April 4, 2025)
 
@@ -70,4 +77,5 @@
 *   Progress tracking moved from root to `docs/PROGRESS.md`.
 *   Adopted Next.js App Router, TailwindCSS, shadcn/ui, Terraform, AWS (S3/CloudFront), and GitHub Actions as key technologies. See `techContext.md` and `systemPatterns.md`.
 *   Emphasis on Infrastructure as Code (Terraform) and automated CI/CD from the start.
-*   Security improvements implemented based on post-launch security review. 
+*   Security improvements implemented based on post-launch security review.
+*   Adjusted CloudFront Content Security Policy (`script-src`) to include `'unsafe-inline'` to ensure compatibility with Next.js inline scripts (April 5, 2025). 
