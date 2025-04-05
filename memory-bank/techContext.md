@@ -42,3 +42,8 @@
 *   **Testing:** Not implemented in MVP.
 *   **Build Process:** `pnpm run build` (uses `next build`). Likely generates static assets for deployment.
 *   **Deployment:** Automated via GitHub Actions workflow (`.github/workflows/deploy.yml`). Uses OIDC for secure AWS authentication. Builds the site using pnpm, syncs static files to S3, invalidates CloudFront cache. Infrastructure defined in Terraform (`terraform/` directory) with state stored in S3 backend.
+*   **Terraform Configuration:**
+    *   **State Management:** Uses S3 backend (`robmclaughl-in-terraform-state` bucket) with DynamoDB locking (`terraform-locks` table).
+    *   **Route53 Configuration:** Uses hardcoded Zone ID (`Z2PPIVE6CKK74T`) with `allow_overwrite = true` to manage existing DNS records.
+    *   **ACM Validation:** Configures DNS validation records for SSL certificates with proper provider configuration.
+    *   **Module Structure:** Organized in modules (`route53`, `acm`, `cloudfront`, `s3`, `iam`) for maintainability.

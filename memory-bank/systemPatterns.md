@@ -47,6 +47,8 @@ graph TD
 *   **Styling (Tailwind CSS + shadcn/ui):** Utility-first CSS for rapid development and custom styling. Shadcn/ui provides accessible, pre-built components compatible with Tailwind.
 *   **Hosting (AWS S3 + CloudFront):** Provides scalable, secure, and performant static site hosting with global CDN delivery, HTTPS, security headers, and access logging.
 *   **Infrastructure as Code (Terraform):** Ensures reproducible, version-controlled, and automated management of AWS resources.
+    *   **Route53 Management:** Uses hardcoded Zone ID with `allow_overwrite = true` to safely manage existing DNS records.
+    *   **S3 Backend:** Stores Terraform state in S3 with DynamoDB locking for team collaboration and state consistency.
 *   **CI/CD (GitHub Actions):** Automates the build and deployment process for efficiency and consistency.
 *   **Secure AWS Authentication (OIDC):** Avoids storing long-lived AWS credentials in GitHub by using OpenID Connect for temporary role assumption.
 
@@ -56,6 +58,8 @@ graph TD
 *   **Utility-First CSS:** Tailwind CSS approach for styling.
 *   **Component-Based Architecture:** Standard React pattern for UI development. Leveraging shadcn/ui components.
 *   **Infrastructure as Code (IaC):** Managing infrastructure through code (Terraform).
+    *   **Resource Adoption Pattern:** Using `allow_overwrite = true` and explicit resource IDs to allow Terraform to manage pre-existing resources.
+    *   **Remote State Pattern:** Using S3 backend for state storage and DynamoDB for state locking.
 *   **Continuous Integration/Continuous Deployment (CI/CD):** Automating build and deployment pipeline (GitHub Actions).
 
 ## Component Relationships (MVP)

@@ -16,6 +16,7 @@
 *   Successful initial deployment of the site to `robmclaughl.in`.
 *   Refined the CRT visual effects applied to the background video component (`HeroBackground`).
 *   Implemented security improvements following post-launch security review.
+*   Fixed Terraform Route53 record management issue by correcting Zone ID and adding `allow_overwrite = true` parameter.
 *   (Previous changes before March 23rd included initial prototype, component implementation, Terraform setup, CI/CD pipeline setup).
 
 ## Immediate Next Steps
@@ -47,4 +48,8 @@
 
 *   Security best practices for AWS static site hosting include using OAC instead of OAI, implementing security headers, and enabling access logging.
 *   Refining CRT effects requires careful tuning of CSS filters, overlays, and potentially shaders for optimal visual appeal and performance.
+*   When managing existing AWS resources with Terraform:
+    * Ensure Zone IDs and other resource identifiers are exactly correct (e.g., `Z2PPIVE6CKK74T` vs. `Z2PPIVE6CKK74TX`).
+    * Use `allow_overwrite = true` for Route53 records to allow Terraform to manage pre-existing DNS records.
+    * Properly configure S3 backend for state management to ensure consistent state across deployments.
 *   (Previous learnings included `HeroBackground` optimizations and IaC/CI/CD setup benefits).

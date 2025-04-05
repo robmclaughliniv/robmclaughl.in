@@ -41,6 +41,7 @@
 
 *   Baseline UI tests are not yet implemented.
 *   Content may require ongoing refinement based on feedback or evolving requirements.
+*   ~~Terraform Route53 record management issue~~ (Fixed April 4, 2025 - See "Recent Terraform Improvements" section).
 
 ## Recent Security Improvements (April 4, 2025)
 
@@ -53,6 +54,15 @@
     *   Updated GitHub Actions workflow to use pnpm (matching local development) and removed redundant `--acl private` flag.
 *   **Terraform:**
     *   Enabled S3 backend with DynamoDB locking for secure and reliable state management.
+
+## Recent Terraform Improvements (April 4, 2025)
+
+*   **Route53 Record Management:**
+    *   Fixed issue with Terraform trying to create Route53 records that already existed.
+    *   Corrected Zone ID from `Z2PPIVE6CKK74TX` to `Z2PPIVE6CKK74T` in the Terraform configuration.
+    *   Added `allow_overwrite = true` to Route53 record resources to allow Terraform to manage existing records.
+    *   Re-enabled ACM validation resources with proper provider configuration.
+    *   Successfully imported existing Route53 records into Terraform state.
 
 ## Decision Log / Evolution
 
