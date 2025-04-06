@@ -1,0 +1,21 @@
+{
+  "name": "my-lambda-function",
+  "version": "1.0.0",
+  "description": "Lambda function example",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "package": "npm run build && node zip.js" 
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.138",
+    "@types/node": "^20.14.2",
+    "typescript": "^5.4.5",
+    "archiver": "^7.0.1", 
+    "@types/archiver": "^6.0.2"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.592.0",
+    "@aws-sdk/lib-dynamodb": "^3.592.0"
+  }
+} 
