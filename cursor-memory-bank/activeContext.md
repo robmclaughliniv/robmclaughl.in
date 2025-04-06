@@ -1,79 +1,66 @@
 # Active Context
 
-*This document tracks the current focus, recent activities, immediate next steps, and important decisions or patterns relevant to the ongoing work. It's a snapshot of the project's current state. **Updated: [Current Date]**.*
+*This document tracks the current focus, recent activities, immediate next steps, and important decisions or patterns relevant to the ongoing work. It's a snapshot of the project's current state. **Updated: [Current Date + 1 Day]**.*
 
 ## Current Focus
 
 *   **Primary:** Polishing the homepage UI to achieve a retro-futuristic CRT monitor aesthetic (effects restored).
-*   **Secondary:** Utilizing and refining the aws platform.
-*   **Next:** Implement baseline UI tests using Cypress.
+*   **Secondary:** Utilizing and refining the AWS platform, including the newly added Lambda/DynamoDB infrastructure.
+*   **Next:**
+    *   Implement baseline UI tests using Cypress.
+    *   Potentially define a trigger (e.g., API Gateway) for the new Lambda function.
 *   **Long-term Vision:** Evolve the page into a "lofi vibe generator" inspired by lofi.cafe, featuring:
     *   An integrated audio player.
     *   AI-driven visuals.
     *   Clickable "channels" to change music and visuals.
     *   Links/elements connecting to subdomains showcasing web experiments.
+    *   Potential use of Lambda/DynamoDB for dynamic features (e.g., saving preferences, simple API).
 
-## Recent Changes (Since April 5, 2025 - Preview Env Implementation)
+## Recent Changes (Since AWS WAF Implementation)
 
-*   **Implemented Ephemeral Preview Environments:**
-    *   Modified GitHub Actions workflow (`.github/workflows/deploy.yml`) to deploy Pull Request branches to S3 prefixes (`s3://<bucket>/branch/<branch-slug>/`).
-    *   Configured Next.js (`next.config.mjs`) to use `basePath` based on environment variable (`BASE_PATH=/branch/<branch-slug>`) set during preview builds.
-    *   Workflow posts preview URL comments to associated Pull Requests.
-    *   Workflow includes job to automatically clean up S3 prefix and invalidate CloudFront cache when a PR branch is deleted.
-    *   Added S3 Lifecycle Policy via Terraform to expire objects under `branch/` prefix after 30 days as a cleanup backup.
-*   **Troubleshooting Preview Environments:**
-    *   Resolved PNPM lockfile compatibility issues in CI by updating PNPM version in workflow (`pnpm/action-setup`) to match local version (10.7.1).
-    *   Resolved `ERR_PNPM_TARBALL_INTEGRITY` errors by refreshing `pnpm-lock.yaml` locally and committing the update.
-    *   Resolved AWS credential loading errors (`Could not load credentials`) by moving necessary secrets (`AWS_DEPLOY_ROLE_ARN`, `CLOUDFRONT_DISTRIBUTION_ID`, `AWS_S3_BUCKET_NAME`, `DOMAIN_NAME`) from Environment Secrets (scoped to `prod`) to Repository Secrets, making them available to all jobs.
-    *   Resolved `AccessDenied` errors when accessing preview URLs (`.../branch/<slug>/`) by creating and associating a CloudFront Function (`append-index-html`) to rewrite URIs ending in `/` or without extensions to append `/index.html`.
-    *   Resolved shell parsing errors (`unexpected EOF`) in final `echo` command of preview job by switching to `printf` and adjusting quoting.
-*   Implemented CloudFront Function (`index_rewrite`) via Terraform to resolve `AccessDenied` errors when accessing subdirectory paths without explicitly specifying `index.html` (e.g., `/branch/staging-env/`).
-*   Configured the CloudFront distribution (via Terraform) to associate the `index_rewrite` function only with specific path patterns defined in a variable (`var.index_rewrite_paths`, initially `["/branch/*"]`), rather than applying it globally.
-*   **(NEW) Implemented AWS WAF:**
-    *   Defined `aws_wafv2_web_acl` in Terraform (`terraform/main.tf`) scoped to `CLOUDFRONT`.
-    *   Configured the ACL in `us-east-1` region using the aliased provider (`aws.us_east_1`).
-    *   Added AWS Managed Rules: `AWSManagedRulesCommonRuleSet` and `AWSManagedRulesAmazonIpReputationList`.
-    *   Associated the Web ACL with the CloudFront distribution via Terraform (`web_acl_id` in `terraform/modules/cloudfront/main.tf`).
-*   (Previous changes: Resolved CSP issue, restored CRT effects, security improvements, Terraform fixes).
+*   **(NEW) Implemented AWS Lambda & DynamoDB via Terraform:**
+    *   Added Terraform configuration (`terraform/lambda_dynamodb.tf`, `terraform/variables_lambda_dynamodb.tf`, `terraform/outputs_lambda_dynamodb.tf`) to manage:
+        *   An AWS Lambda function written in TypeScript (source in `/lambda_src`).
+        *   A DynamoDB table (`robmclaughlin-{env}`) with on-demand capacity.
+        *   The necessary IAM role (`robmclaughlin-{env}-lambda-exec-role`) and policy (`robmclaughlin-{env}-dynamodb-write-policy`) for the Lambda to write to the DynamoDB table.
+        *   A CloudWatch Log Group for the Lambda function.
+    *   Created Lambda source structure (`/lambda_src`) with `package.json`, `tsconfig.json`, `src/index.ts` (placeholder handler), and `zip.js` (Node.js script using `archiver` for packaging).
+    *   Uses Terraform workspaces (`dev`/`prod`) for environment differentiation.
+    *   Required `pnpm install` and `pnpm run package` in `/lambda_src` before `terraform apply`.
+    *   Resolved `EntityAlreadyExists` errors during `terraform apply` by importing the pre-existing IAM role and policy using `terraform import`.
+    *   Resolved `Duplicate provider configuration` errors by removing redundant `terraform` and `provider` blocks from `lambda_dynamodb.tf`.
+*   (Previous changes: WAF, Preview Env setup & troubleshooting, CSP fix, etc.).
 
 ## Immediate Next Steps
 
 1.  **✅ CloudFront Subdirectory Index Handling:** Implemented CloudFront Function via Terraform.
 2.  **✅ AWS WAF Implementation:** Added WAF with managed rules via Terraform.
-3.  **Next: Baseline Testing:** Implement basic functional UI tests using Cypress.
+3.  **✅ Lambda & DynamoDB Base Setup:** Created Lambda function, DynamoDB table, and IAM resources via Terraform.
+4.  **Next: Baseline Testing:** Implement basic functional UI tests using Cypress.
+5.  **Next: Lambda Trigger (Optional):** Define how the Lambda function will be invoked (e.g., API Gateway).
 
 ## Active Decisions & Considerations
 
-*   **Preview Environment URL Structure:** Previews are accessible at `https://<domain>/branch/<sanitized-branch-name>`. Branch names are sanitized (lowercase, alphanumeric + hyphen only).
-*   **Secrets Management:** Key deployment secrets are now managed at the Repository level for accessibility by all workflow jobs.
-*   **CloudFront Function for Index Files:** Relying on a CloudFront Function to serve `index.html` for directory-like requests.
-*   **CloudFront Function for Index Rewrites:** Using a CloudFront Function associated with specific cache behaviors (driven by the `index_rewrite_paths` Terraform variable) is the chosen method for handling subdirectory index files. This provides flexibility to add more paths later without modifying the function code.
-*   **CSP `'unsafe-inline'`:** Currently allowing `'unsafe-inline'` scripts via CloudFront CSP as a necessary workaround for Next.js compatibility with CDN-level headers. More secure alternatives (hashes, nonces) are complex to implement in this setup.
-*   **WAF Configuration:** Using AWS WAF with `AWSManagedRulesCommonRuleSet` and `AWSManagedRulesAmazonIpReputationList` associated with CloudFront for baseline protection, anticipating future backend expansion.
-*   **WAF Region Requirement:** WAF ACLs associated with CloudFront MUST be created in `us-east-1`.
-*   **No Analytics:** Analytics implementation is deferred.
-*   (Previous decisions: CSP `unsafe-inline`, no analytics/dark mode/blog, core focus on generator concept).
+*   **Lambda/DynamoDB Management:** These backend components are managed via Terraform within the `/terraform` directory, consistent with other infrastructure.
+*   **Lambda Source Code Location:** Lambda source code (`/lambda_src`) and build artifacts (`/build`) are kept in the project root, separate from the Next.js application code (`/app`, `/components`).
+*   **Lambda Packaging:** Requires a manual build/package step (`pnpm run package` in `/lambda_src`) before running `terraform apply`.
+*   **Terraform Structure:** Added specific files (`lambda_dynamodb.tf`, `variables_lambda_dynamodb.tf`, `outputs_lambda_dynamodb.tf`) to the `/terraform` directory rather than merging into `main.tf` for modularity.
+*   (Previous decisions: Preview Env structure, Secrets, CF Functions, CSP, WAF, etc.).
 
 ## Key Patterns & Preferences
 
-*   Leverage Next.js `basePath` for deploying branches to subpaths.
-*   Use GitHub Actions for multi-job CI/CD (prod deploy, preview deploy, preview cleanup).
-*   Use Repository Secrets for credentials shared across CI jobs.
-*   Use CloudFront Functions for edge request modifications (e.g., default index file).
-*   Use AWS WAF with Managed Rules for baseline web application security at the edge (CloudFront).
-*   (Previous patterns: Next.js SSG, Tailwind, shadcn/ui, Terraform IaC, OIDC).
+*   Use Terraform to manage all AWS infrastructure, including serverless components like Lambda and DynamoDB.
+*   Co-locate Lambda source code (`/lambda_src`) near the root but keep Terraform definitions centralized (`/terraform`).
+*   Use Node.js scripts (e.g., `zip.js` with `archiver`) for platform-independent build steps like packaging when system commands (`zip`) are unreliable.
+*   Use `terraform import` to bring existing resources under Terraform management when encountering `EntityAlreadyExists` errors.
+*   Define `terraform` and `provider` blocks only once per module (typically in `main.tf` or `versions.tf`).
+*   (Previous patterns: Next.js SSG, Tailwind, shadcn/ui, Terraform IaC, OIDC, Preview Envs, WAF, CF Functions).
 
-## Learnings & Insights (Recent - Preview Envs & WAF)
+## Learnings & Insights (Recent - Lambda/DynamoDB & Terraform Issues)
 
-*   GitHub Actions jobs only inherit secrets available at their scope (Repository or specified Environment).
-*   PNPM requires lockfile (`pnpm-lock.yaml`) commitment and consistent versions between local dev and CI (`pnpm/action-setup` version).
-*   `ERR_PNPM_TARBALL_INTEGRITY` often indicates a republished package version requiring a lockfile refresh (`rm -rf node_modules && pnpm i`).
-*   OIDC credential loading failures usually point to incorrect Role ARN secret values or misconfigured IAM Role Trust Policies.
-*   Shell command parsing in GitHub Actions `run:` steps can be sensitive; `printf` can be more robust than `echo` for complex strings with variable interpolation.
-*   Serving static sites from S3 subdirectories via CloudFront often requires a CloudFront Function or Lambda@Edge to rewrite requests for directory paths (`/foo/`) to the index document (`/foo/index.html`). OAC alone doesn't handle this.
-*   **CloudFront Functions for URI Rewrites:** CloudFront Functions provide a lightweight, edge-based solution to modify requests, such as appending `index.html` to directory-like URIs, before they reach the origin (S3). This avoids `AccessDenied` errors when S3 is not configured for website hosting (which is correct when using CloudFront OAC).
-*   **Targeted Function Association:** Associating CloudFront Functions with specific `ordered_cache_behavior` blocks (based on path patterns) instead of the `default_cache_behavior` allows for precise control over where the function logic is applied.
-*   **Terraform Dynamic Blocks:** Using `dynamic "ordered_cache_behavior"` with `for_each` allows creating multiple cache behaviors based on a list variable, making the configuration flexible and maintainable for multiple path patterns requiring the same function.
-*   **CSP and Next.js:** Implementing strict Content Security Policies (especially `script-src 'self'`) via CDN headers (like CloudFront Response Headers Policy) can conflict with Next.js's reliance on inline scripts for hydration/functionality, causing rendering failures (e.g., blank screens after initial load). Requires `unsafe-inline`.
-*   **(NEW) AWS WAF Scope/Region:** WAFv2 Web ACLs intended for CloudFront (`scope = "CLOUDFRONT"`) MUST be created in the `us-east-1` region, requiring explicit provider configuration in Terraform if the default provider is in a different region.
-*   (Previous learnings: CSP/Next.js, troubleshooting, AWS security, Terraform resource management, HeroBackground optimizations, IaC/CI/CD setup benefits). 
+*   The `zip` command is not universally available, especially on Windows; Node.js packages like `archiver` provide a cross-platform solution for creating zip archives in build scripts.
+*   `terraform apply` errors like `EntityAlreadyExists` often indicate resources exist in AWS but not in the Terraform state, requiring `terraform import`.
+*   `terraform init` errors like `Duplicate provider configuration` occur when `provider` or `terraform` blocks are defined in multiple `.tf` files within the same module; these should be centralized.
+*   File path references in Terraform (`${path.module}`) are relative to the `.tf` file's location. Paths need adjustment when moving files (e.g., `../lambda_src` when accessing from `/terraform`).
+*   Terminal tools within some environments might struggle with relative path navigation (`cd ..`), requiring explicit full paths or careful command chaining.
+*   (Previous learnings: Preview Envs, WAF, CSP/Next.js, etc.). 
