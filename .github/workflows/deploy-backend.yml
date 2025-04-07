@@ -1,0 +1,197 @@
+# .github/workflows/deploy-backend.yml
+name: Deploy Backend Infrastructure
+
+on:
+  push:
+    branches:
+      - master # Or your main branch name
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - master # Or your main branch name
+  workflow_dispatch: # Allows manual triggering
+
+# Permissions needed for OIDC connection to AWS
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  plan-staging:
+    name: Plan Backend (Staging/PR)
+    # Only run this job for pull request events
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js and PNPM
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Match Lambda runtime or desired version
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10 # Match local/required pnpm version
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install Lambda Dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: ./lambda_src
+
+      - name: Build Lambda Package
+        run: pnpm run package
+        working-directory: ./lambda_src
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # You need to create an IAM role that Terraform can assume
+          # and store its ARN in a GitHub secret named TERRAFORM_AWS_IAM_ROLE_ARN.
+          # This role needs permissions for:
+          # - S3 (terraform state bucket read/write)
+          # - DynamoDB (terraform lock table read/write/delete)
+          # - Lambda (create/update/delete function, add permissions)
+          # - DynamoDB (create/update/delete table)
+          # - API Gateway v2 (create/update/delete API, stage, integration, route)
+          # - IAM (create/update/delete role, policy, attach policy - for lambda exec role and potentially others)
+          # - CloudWatch Logs (create/update log group - for lambda)
+          role-to-assume: ${{ secrets.TERRAFORM_AWS_IAM_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-west-2' }} # Use repo variable or default
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.8 # Use your desired Terraform version constraint
+
+      - name: Terraform Init (Staging)
+        id: init-staging
+        run: terraform init
+        working-directory: ./terraform
+        env:
+           AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+
+      - name: Terraform Workspace Select (Staging)
+        id: workspace-staging
+        # Assumes 'dev' workspace exists and corresponds to staging/PR environment
+        run: terraform workspace select dev || terraform workspace new dev
+        working-directory: ./terraform
+        env:
+           AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+
+      - name: Terraform Plan (Staging)
+        id: plan-staging
+        run: terraform plan -no-color
+        # Continue on error to allow potential reporting even if plan fails
+        continue-on-error: true
+        working-directory: ./terraform
+        env:
+           AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+           # TF_LOG: DEBUG # Uncomment for debugging Terraform issues
+
+      # Optional: Add step here to comment plan output on the PR
+      # using actions like github-script or peter-evans/create-or-update-comment
+
+      - name: Check Plan Status
+        if: steps.plan-staging.outcome == 'failure'
+        run: exit 1
+
+
+  deploy-prod:
+    name: Deploy Backend (Production)
+    # Only run this job for pushes to master or manual triggers
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js and PNPM
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Match Lambda runtime or desired version
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10 # Match local/required pnpm version
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install Lambda Dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: ./lambda_src
+
+      - name: Build Lambda Package
+        run: pnpm run package
+        working-directory: ./lambda_src
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # Same role assumption as staging, ensure it has prod permissions
+          role-to-assume: ${{ secrets.TERRAFORM_AWS_IAM_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-west-2' }} # Use repo variable or default
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.8 # Use your desired Terraform version constraint
+
+      - name: Terraform Init (Production)
+        id: init-prod
+        run: terraform init
+        working-directory: ./terraform
+        env:
+           AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+
+      - name: Terraform Workspace Select (Production)
+        id: workspace-prod
+        # Assumes 'prod' workspace exists and corresponds to production environment
+        run: terraform workspace select prod || terraform workspace new prod
+        working-directory: ./terraform
+        env:
+           AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+
+      - name: Terraform Plan (Production)
+        id: plan-prod
+        run: terraform plan -out=tfplan -no-color
+        working-directory: ./terraform
+        env:
+           AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+
+      - name: Terraform Apply (Production)
+        id: apply-prod
+        run: terraform apply -auto-approve tfplan
+        working-directory: ./terraform
+        env:
+           AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }} 
