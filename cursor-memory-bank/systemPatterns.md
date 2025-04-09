@@ -133,7 +133,7 @@ graph TD
 *   **API Gateway Pattern:** Using HTTP API as a facade for the Lambda function.
 *   **NoSQL Database:** AWS DynamoDB for data persistence.
 *   **Ephemeral Preview Environments:** For the frontend application.
-*   **Infrastructure as Code (IaC):** Managing all AWS infrastructure via Terraform.
+*   **Infrastructure as Code (IaC):** Managing all AWS infrastructure via Terraform. The S3 module (`./modules/s3`) was refactored to remove plan-time dependencies by using an explicit `create_bucket` variable. The CloudFront OAC S3 bucket policy is now managed directly in the root configuration (`main.tf`) instead of the S3 module.
 *   **CI/CD:** Automating frontend and backend deployment/management via separate GitHub Actions workflows.
 *   **Web Application Firewall (WAF):** Using AWS WAF with managed rules at the CloudFront edge.
 *   **CloudFront Edge Logic:** Using CloudFront Functions to modify requests at the edge.
@@ -163,6 +163,8 @@ graph TD
     *   Defines relationships between API Gateway, Lambda, IAM Role, IAM Policy, and DynamoDB Table.
     *   Defines frontend infrastructure (S3, CloudFront, etc.).
     *   Uses `archive_file` data source referencing `/build/lambda_function.zip`.
+    *   **Root (`main.tf`):** Calls modules (`s3`, `cloudfront`, `acm`, `route53`, `iam`), defines WAF ACL, defines the S3 OAC bucket policy (`aws_s3_bucket_policy.bucket_policy_oac`).
+    *   **S3 Module (`./modules/s3`):** Conditionally creates S3 bucket and related resources based on `create_bucket` input.
 *   **CI/CD (`.github/workflows`):**
     *   `deploy.yml`: Deploys frontend assets to S3, invalidates CloudFront.
     *   `deploy-backend.yml`: Builds Lambda, runs Terraform `plan`/`apply` to manage backend resources (Lambda, DynamoDB, APIGW, IAM) using OIDC auth and workspaces.

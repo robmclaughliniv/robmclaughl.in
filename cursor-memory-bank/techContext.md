@@ -66,8 +66,9 @@
 *   **Terraform Configuration (`/terraform`):**
     *   Manages all AWS resources (Frontend: S3, CloudFront, etc.; Backend: Lambda, DynamoDB, IAM, **API Gateway**).
     *   Uses workspaces for environments (`dev`, `prod`).
-    *   Configuration split into logical files (e.g., `main.tf`, `lambda_dynamodb.tf`, `api_gateway.tf`).
+    *   Configuration split into logical files (e.g., `main.tf`, `lambda_dynamodb.tf`, `api_gateway.tf`) and modules (e.g., `s3`, `cloudfront`, `acm`).
     *   Uses S3 backend with DynamoDB locking.
     *   Relies on `archive_file` data source using the zip file created by the Lambda build process.
     *   Handles existing resources via `terraform import` when necessary.
+    *   **S3 Module (`./modules/s3`):** Refactored to accept a `create_bucket` boolean input instead of deriving creation logic from `cloudfront_distribution_arn` to resolve plan-time dependency errors. The CloudFront OAC bucket policy is now defined in the root `main.tf` instead of the module.
 *   **CloudFront Function:** `append-index-html` (manual creation, needs update). // TODO: Manage via Terraform 

@@ -142,4 +142,5 @@
 *   **Implemented Lambda Logic:** Updated Lambda handler (`index.ts`) to parse/validate POST body and write to DynamoDB ([Current Date + 2 Days]).
 *   **Added Backend CI/CD:** Created a separate GitHub Actions workflow (`deploy-backend.yml`) for managing Terraform apply for backend resources. Uses OIDC for authentication and Terraform workspaces (`dev`/`prod`) ([Current Date + 2 Days]).
 *   **Authentication Choice:** Opted for OIDC over static API keys for the backend deployment workflow due to enhanced security ([Current Date + 2 Days]).
-*   **Manual Step:** Acknowledged the OIDC IAM Role for the backend workflow requires manual creation outside the primary Terraform apply ([Current Date + 2 Days]). 
+*   **Manual Step:** Acknowledged the OIDC IAM Role for the backend workflow requires manual creation outside the primary Terraform apply ([Current Date + 2 Days]).
+*   **Terraform S3 Module Refactoring:** Refactored the S3 module (`./modules/s3`) to use an explicit `create_bucket` input variable and moved the OAC S3 bucket policy definition to the root `main.tf` to resolve plan-time dependency errors encountered during CI/CD runs ([Current Date + 3 Days]). 
