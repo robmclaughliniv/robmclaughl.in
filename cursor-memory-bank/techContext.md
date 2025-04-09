@@ -5,10 +5,10 @@
 ## Technology Stack
 
 *   **Frontend:** Next.js 13 (App Router), React, TypeScript, Tailwind CSS, shadcn/ui components.
-*   **Backend:** AWS Lambda (Node.js 20.x runtime, TypeScript), AWS DynamoDB (On-Demand).
-*   **Infrastructure:** AWS (S3, CloudFront, Route 53, ACM, Lambda, DynamoDB, IAM, CloudWatch Logs). Infrastructure as Code managed by Terraform.
-*   **Security:** AWS WAFv2 (associated with CloudFront), IAM Roles/Policies.
-*   **CI/CD:** GitHub Actions (for frontend deployment).
+*   **Backend:** AWS Lambda (Node.js 20.x runtime, TypeScript), AWS DynamoDB (On-Demand), **AWS API Gateway (HTTP API)**.
+*   **Infrastructure:** AWS (S3, CloudFront, Route 53, ACM, Lambda, DynamoDB, IAM, CloudWatch Logs, **API Gateway**). Infrastructure as Code managed by Terraform.
+*   **Security:** AWS WAFv2 (associated with CloudFront), IAM Roles/Policies, **OIDC for GitHub Actions Authentication**.
+*   **CI/CD:** GitHub Actions (for frontend `deploy.yml` and **backend `deploy-backend.yml`** deployments).
 *   **Packaging:** `archiver` Node.js package (for Lambda deployment zip).
 *   **Other Key Technologies:** AWS CLI.
 
@@ -23,19 +23,23 @@
 *   **Terraform Setup:**
     *   Navigate to `/terraform`.
     *   Run `terraform init`.
-    *   Use `terraform workspace select <name>` (e.g., `default` for dev, `prod`).
+    *   Use `terraform workspace select <name>` (`dev` or `prod`).
     *   Run `terraform plan` and `terraform apply`.
 *   **Environment Variables:**
     *   `BASE_PATH`: Used during frontend `deploy-preview` CI job.
     *   `DYNAMODB_TABLE_NAME`: Set automatically for Lambda function by Terraform.
+*   **GitHub Secrets/Variables:**
+    *   `TERRAFORM_AWS_IAM_ROLE_ARN`: Required by `deploy-backend.yml` workflow (stores ARN of role assumed via OIDC).
+    *   `AWS_REGION` (Optional Variable): Used by workflows if region is not `us-west-2`.
 
 ## Technical Constraints
 
-*   **MVP Focus:** Initial build is a minimal single-page application, Lambda/DynamoDB added for future use.
-*   **Performance:** Frontend must load quickly. Lambda performance considerations (cold starts, memory).
+*   **MVP Focus:** Initial build was minimal SPA; API/Lambda/DynamoDB added for basic backend interaction (e.g., contact form).
+*   **Performance:** Frontend must load quickly. Lambda performance considerations.
 *   **Responsiveness:** Frontend must work well across devices.
-*   **Security:** HTTPS, OAC, OIDC, WAF, Security Headers, Least Privilege IAM for Lambda.
-*   **Manual Lambda Build Step:** Requires `pnpm run package` in `/lambda_src` before `terraform apply` can deploy Lambda updates.
+*   **Security:** HTTPS, OAC, OIDC, WAF, Security Headers, Least Privilege IAM (Lambda exec role, **ongoing refinement for backend deployment role**).
+*   **Manual Lambda Build Step (Local):** Requires `pnpm run package` in `/lambda_src` before local `terraform apply` can deploy Lambda updates (automated in CI/CD).
+*   **Manual OIDC Role Creation:** The IAM role used by the backend deployment workflow needs manual creation in AWS.
 
 ## Key Dependencies
 
@@ -54,15 +58,15 @@
 *   **Linters/Formatters:** Standard TypeScript/Next.js setup.
 *   **Testing:** Cypress planned next.
 *   **Build Process:**
-    *   Frontend: `pnpm run build` in root (via GHA).
-    *   Backend: `pnpm run package` in `/lambda_src` (manual step before Terraform apply).
+    *   Frontend: `pnpm run build` in root (via `deploy.yml`).
+    *   Backend: `pnpm run package` in `/lambda_src` (manual step locally, automated in `deploy-backend.yml`).
 *   **Deployment:**
     *   Frontend: Automated via GitHub Actions (`.github/workflows/deploy.yml`).
-    *   Backend (Lambda/DynamoDB/IAM): Via `terraform apply` in `/terraform` directory (manual trigger).
+    *   Backend (Lambda/DynamoDB/IAM/APIGW): Automated via GitHub Actions (`.github/workflows/deploy-backend.yml`) using Terraform.
 *   **Terraform Configuration (`/terraform`):**
-    *   Manages all AWS resources (Frontend: S3, CloudFront, etc.; Backend: Lambda, DynamoDB, IAM).
+    *   Manages all AWS resources (Frontend: S3, CloudFront, etc.; Backend: Lambda, DynamoDB, IAM, **API Gateway**).
     *   Uses workspaces for environments (`dev`, `prod`).
-    *   Configuration split into logical files (e.g., `main.tf`, `lambda_dynamodb.tf`).
+    *   Configuration split into logical files (e.g., `main.tf`, `lambda_dynamodb.tf`, `api_gateway.tf`).
     *   Uses S3 backend with DynamoDB locking.
     *   Relies on `archive_file` data source using the zip file created by the Lambda build process.
     *   Handles existing resources via `terraform import` when necessary.
