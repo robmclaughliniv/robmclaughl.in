@@ -3,10 +3,10 @@ variable "bucket_name" {
   type        = string
 }
 
-variable "cloudfront_distribution_arn" {
-  description = "The ARN of the CloudFront distribution that needs access"
-  type        = string
-  default     = ""
+variable "create_bucket" {
+  description = "Boolean flag to control whether the bucket resource should be created."
+  type        = bool
+  default     = true
 }
 
 variable "is_logs_bucket" {
