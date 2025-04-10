@@ -11,6 +11,7 @@
 *   **CI/CD:** GitHub Actions (for frontend `deploy.yml` and **backend `deploy-backend.yml`** deployments).
 *   **Packaging:** `archiver` Node.js package (for Lambda deployment zip).
 *   **Other Key Technologies:** AWS CLI.
+*   **Local Development/Testing:** LocalStack (via Docker), AWS CLI (v2).
 
 ## Development Environment Setup
 
@@ -31,6 +32,12 @@
 *   **GitHub Secrets/Variables:**
     *   `TERRAFORM_AWS_IAM_ROLE_ARN`: Required by `deploy-backend.yml` workflow (stores ARN of role assumed via OIDC).
     *   `AWS_REGION` (Optional Variable): Used by workflows if region is not `us-west-2`.
+*   **Local Backend Development (Lambda/DynamoDB):**
+    *   Requires Docker Desktop, LocalStack CLI (`pip install localstack`), AWS CLI (v2).
+    *   On Windows, Win32 long path support may need to be enabled for `pip` installations.
+    *   Uses LocalStack to emulate AWS Lambda and DynamoDB locally.
+    *   Interaction with LocalStack services should use `aws --endpoint-url=http://localhost:4566 ...` rather than the `awslocal` wrapper (which can be unstable in some terminals).
+    *   Detailed setup and invocation instructions are in `/LOCAL_DEVELOPMENT.md`.
 
 ## Technical Constraints
 

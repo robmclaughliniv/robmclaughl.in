@@ -1,12 +1,13 @@
 # Active Context
 
-*This document tracks the current focus, recent activities, immediate next steps, and important decisions or patterns relevant to the ongoing work. It's a snapshot of the project's current state. **Updated: [Current Date + 2 Days]**.*
+*This document tracks the current focus, recent activities, immediate next steps, and important decisions or patterns relevant to the ongoing work. It's a snapshot of the project's current state. **Updated: [Current Date + 3 Days]**.*
 
 ## Current Focus
 
 *   **Primary:** Integrate the newly created backend API (`POST /contact`) with the frontend application. This involves creating a form or mechanism on the website to send data to the API Gateway endpoint.
 *   **Secondary:** Refine IAM permissions for the new backend deployment role (`TERRAFORM_AWS_IAM_ROLE_ARN`) to follow the principle of least privilege.
 *   **Tertiary (Recently Completed):** Resolved Terraform plan errors in GitHub Actions related to S3 module dependencies by refactoring the module (`./modules/s3`) and root configuration (`main.tf`).
+*   **Quaternary (Recently Completed):** Established and documented a local development/testing environment for the Lambda function and DynamoDB using LocalStack (`LOCAL_DEVELOPMENT.md`). Successfully tested local invocation.
 *   **Next:**
     *   Implement baseline UI tests using Cypress, potentially including a test for the frontend-backend interaction.
 
@@ -33,10 +34,11 @@
 6.  ✅ Backend Deployment Workflow Created (`deploy-backend.yml`).
 7.  ✅ Terraform Workspaces Created (`dev`, `prod`).
 8.  ✅ **(Completed)** Terraform S3 Module Refactoring to fix CI/CD plan errors.
-9.  **(Manual Task)** Create OIDC IAM Role in AWS and configure `TERRAFORM_AWS_IAM_ROLE_ARN` secret in GitHub.
-10. **Next: Frontend Integration:** Build UI element (e.g., contact form) to call the `POST /contact` API endpoint.
-11. **Next: Refine IAM Permissions:** Create custom, least-privilege IAM policy for the backend deployment role.
-12. **Next: Baseline Testing:** Implement basic functional UI tests using Cypress.
+9.  ✅ **(Completed)** Setup and documentation of local Lambda/DynamoDB testing environment using LocalStack (`LOCAL_DEVELOPMENT.md`).
+10. **(Manual Task)** Create OIDC IAM Role in AWS and configure `TERRAFORM_AWS_IAM_ROLE_ARN` secret in GitHub.
+11. **Next: Frontend Integration:** Build UI element (e.g., contact form) to call the `POST /contact` API endpoint.
+12. **Next: Refine IAM Permissions:** Create custom, least-privilege IAM policy for the backend deployment role.
+13. **Next: Baseline Testing:** Implement basic functional UI tests using Cypress.
 
 ## Active Decisions & Considerations
 
@@ -46,6 +48,7 @@
 *   **Authentication:** OIDC preferred over static API keys for CI/CD workflows.
 *   **Manual Setup:** The initial OIDC role for the deployment workflow requires manual creation due to the chicken-and-egg problem with Terraform permissions.
 *   **IAM Permissions (Temporary):** Using broader managed policies initially for the OIDC role, with the explicit requirement to refine them post-setup.
+*   **Local Testing:** Utilize LocalStack for emulating Lambda/DynamoDB. Invoke Lambda locally using `aws lambda invoke --endpoint-url...` with a payload simulating the API Gateway event structure (`event.body`). Prefer `aws --endpoint-url` over `awslocal` due to stability issues.
 *   (Previous decisions: Lambda/DynamoDB Management, Lambda Source Location, Packaging, etc.).
 
 ## Key Patterns & Preferences
@@ -57,13 +60,17 @@
 *   Handle Lambda code validation and database interaction within the Lambda handler.
 *   Use API Gateway as the HTTP frontend for Lambda functions.
 *   **Decouple Terraform resources to avoid plan-time dependency errors, managing dependent resources (like bucket policies needing ARNs) at a higher level in the configuration.**
+*   **Simulate API Gateway event structure (`event.body`) when invoking Lambda directly for local testing.**
 *   (Previous patterns: Next.js SSG, Tailwind, IaC, etc.).
 
-## Learnings & Insights (Recent - API, CI/CD, Terraform Refactor)
+## Learnings & Insights (Recent - API, CI/CD, Terraform Refactor, LocalStack)
 
 *   Terraform `count` arguments cannot depend on values unknown until the apply phase. Refactoring modules to use explicit boolean inputs for conditional creation and defining dependent resources (like policies) at the root level resolves these issues.
 *   GitHub Actions workflows require credentials *before* Terraform can run, necessitating manual creation of the initial OIDC role Terraform will use.
 *   OIDC provides a secure alternative to storing long-lived AWS keys in GitHub Secrets.
 *   Separating backend deployment into its own workflow improves clarity and separation of concerns.
 *   API Gateway V2 (HTTP API) provides a simpler, cheaper alternative to REST APIs for basic Lambda integrations.
-*   Terraform workspaces are effective for managing state across different deployment environments (dev/staging vs. production). 
+*   Terraform workspaces are effective for managing state across different deployment environments (dev/staging vs. production).
+*   Windows long path limitations can interfere with `pip install` for packages with deep directory structures; enabling Win32 long path support is the standard fix.
+*   The `awslocal` wrapper can be unstable in some terminal environments (e.g., Git Bash on Windows); using `aws --endpoint-url=...` directly is more reliable.
+*   Direct `aws lambda invoke` passes the payload as the root `event` object. If Lambda code expects an API Gateway structure, the payload must be wrapped (e.g., `{"body": "..."}`) to simulate the expected input. 

@@ -1,8 +1,8 @@
 # Project Progress
 
-*This document tracks the overall status of the project, what components are functional, what remains to be built, known issues, and the evolution of key decisions.*
+*This document tracks the overall status of the project, what components are functional, what remains to be built, known issues, and the evolution of key decisions. **Updated: [Current Date + 3 Days]**.*
 
-## Current Status (as of [Current Date + 2 Days])
+## Current Status (as of [Current Date + 3 Days])
 
 *   Production site live at `robmclaughl.in`.
 *   **Ephemeral Preview Environments implemented and operational:**
@@ -29,6 +29,9 @@
     *   Handles Terraform `plan` for PRs (`dev` workspace) and `apply` for `master` branch (`prod` workspace).
     *   Uses OIDC for AWS authentication (`secrets.TERRAFORM_AWS_IAM_ROLE_ARN`).
     *   Includes Lambda build step (`pnpm run package`).
+*   **Local Development Environment Setup:**
+    *   A documented process (`LOCAL_DEVELOPMENT.md`) exists for setting up a local Lambda/DynamoDB testing environment using LocalStack.
+    *   Local testing of the Lambda function (via direct invocation simulating API Gateway) has been successful.
 *   Previous items (security hardening, CSP fix, IaC setup, frontend CI/CD, UI components) remain complete.
 
 ## What Works
@@ -48,6 +51,11 @@
     *   API Gateway HTTP API exists with `POST /contact` route.
     *   API Gateway successfully triggers the Lambda function.
     *   API Gateway CORS configuration allows requests from configured origins.
+*   **Local Development/Testing:**
+    *   LocalStack can be started to emulate Lambda and DynamoDB.
+    *   Lambda function can be built, deployed locally, and invoked using `aws lambda invoke --endpoint-url`.
+    *   Local DynamoDB table can be created and interacted with via `aws dynamodb --endpoint-url`.
+    *   The documented local testing procedure (`LOCAL_DEVELOPMENT.md`) is functional.
 *   **Infrastructure & Deployment:**
     *   Terraform scripts (`/terraform`) manage AWS resources (S3, CloudFront, Route53, ACM, WAF, Lambda, DynamoDB, IAM, **API Gateway**).
     *   GitHub Actions workflow for **frontend** CI/CD (`deploy.yml`) operational.
@@ -57,6 +65,9 @@
     *   Ephemeral frontend preview deployment to `robmclaughl.in/branch/<slug>/`.
     *   CloudFront Function (`append-index-html`) serving index files.
     *   Security measures (OAC, logging, security headers, OIDC, WAF, Lambda IAM).
+    *   Automates Lambda build (`pnpm run package`).
+    *   Authenticates to AWS using OIDC via `secrets.TERRAFORM_AWS_IAM_ROLE_ARN`.
+*   **Local Development Setup:** Established and documented (`LOCAL_DEVELOPMENT.md`) a method for local Lambda/DynamoDB testing using LocalStack, preferring `aws --endpoint-url` and simulating API Gateway events for direct invocation ([Current Date + 3 Days]).
 
 ## What's Left to Build / Next Steps
 
@@ -85,6 +96,8 @@
 *   *(Minor)* Baseline UI tests are not yet implemented.
 *   *(Minor)* Lambda tests are not implemented.
 *   *(Minor)* CloudFront Function `append-index-html` is managed manually outside of Terraform.
+*   *(Resolved)* `awslocal` command instability in Git Bash/MINGW64 (workaround: use `aws --endpoint-url`).
+*   *(Resolved)* Incorrect payload structure for direct `aws lambda invoke` (workaround: simulate API Gateway `event.body` structure in `payload.json`).
 
 ## Recent Terraform Improvements (Lambda/DynamoDB Setup)
 
@@ -143,4 +156,5 @@
 *   **Added Backend CI/CD:** Created a separate GitHub Actions workflow (`deploy-backend.yml`) for managing Terraform apply for backend resources. Uses OIDC for authentication and Terraform workspaces (`dev`/`prod`) ([Current Date + 2 Days]).
 *   **Authentication Choice:** Opted for OIDC over static API keys for the backend deployment workflow due to enhanced security ([Current Date + 2 Days]).
 *   **Manual Step:** Acknowledged the OIDC IAM Role for the backend workflow requires manual creation outside the primary Terraform apply ([Current Date + 2 Days]).
-*   **Terraform S3 Module Refactoring:** Refactored the S3 module (`./modules/s3`) to use an explicit `create_bucket` input variable and moved the OAC S3 bucket policy definition to the root `main.tf` to resolve plan-time dependency errors encountered during CI/CD runs ([Current Date + 3 Days]). 
+*   **Terraform S3 Module Refactoring:** Refactored the S3 module (`./modules/s3`) to use an explicit `create_bucket` input variable and moved the OAC S3 bucket policy definition to the root `main.tf` to resolve plan-time dependency errors encountered during CI/CD runs ([Current Date + 3 Days]).
+*   **Local Development Setup:** Established and documented (`LOCAL_DEVELOPMENT.md`) a method for local Lambda/DynamoDB testing using LocalStack, preferring `aws --endpoint-url` and simulating API Gateway events for direct invocation ([Current Date + 3 Days]). 

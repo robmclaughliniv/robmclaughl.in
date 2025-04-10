@@ -143,6 +143,7 @@ graph TD
 *   **OIDC:** Using OpenID Connect for temporary role assumption (for GHA deployment roles).
 *   **Least Privilege:** IAM policies grant specific permissions (Lambda exec role; **backend deployment role needs refinement**).
 *   **Terraform Workspaces:** Used to manage state for different environments.
+*   **Local Testing Pattern:** Using LocalStack to emulate AWS services (Lambda, DynamoDB) locally. Invoking Lambda directly via CLI requires simulating the expected event structure (e.g., API Gateway's `event.body`).
 
 ## Component Relationships (MVP + Backend)
 
@@ -174,6 +175,7 @@ graph TD
 *   **User Request Flow (Production - Frontend):** User visits `robmclaughl.in` -> DNS (Route53) -> WAF -> CloudFront -> (Optional: CF Function rewrite) -> S3 Origin (OAC) -> Page Renders.
 *   **User Request Flow (Preview - Frontend):** User visits `robmclaughl.in/branch/slug-1/` -> DNS -> WAF -> CloudFront -> CF Function rewrite -> S3 Origin (OAC) -> Page Renders.
 *   **API Call Flow:** Client sends `POST` to `https://{api-gw-id}.execute-api.{region}.amazonaws.com/contact` -> API Gateway -> Triggers Lambda -> Lambda validates, writes to DynamoDB -> Lambda returns response -> API Gateway returns response to Client.
+*   **Local Lambda Invocation Flow (Testing):** Developer runs `aws lambda invoke --endpoint-url=http://localhost:4566 ...` with simulated event payload -> LocalStack Lambda Runtime executes function code -> Function interacts with LocalStack DynamoDB -> Function returns response to CLI.
 *   **Frontend Deployment Flow (Prod/Preview/Cleanup):** As defined via `deploy.yml`.
 *   **Backend Deployment Flow (`master` push):** Push to `master` -> `deploy-backend.yml` triggers -> `deploy-prod` job runs -> Installs deps, builds Lambda package -> Assumes AWS Role via OIDC -> Terraform Init -> Select `prod` workspace -> Terraform Plan -> Terraform Apply -> AWS resources (Lambda, APIGW, etc.) created/updated.
 *   **Backend Plan Flow (PR):** Push to PR branch -> `deploy-backend.yml` triggers -> `plan-staging` job runs -> Installs deps, builds Lambda package -> Assumes AWS Role via OIDC -> Terraform Init -> Select `dev` workspace -> Terraform Plan -> Plan output available for review (no apply).
