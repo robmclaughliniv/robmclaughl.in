@@ -10,8 +10,6 @@ on:
     branches:
       - master # Or your main branch name
   delete: # Trigger on any delete event
-    branches: # Add explicit branch filtering here
-      - '!master' # Only trigger for non-master branches
   workflow_dispatch: # Allows manual triggering
 
 # Permissions needed for OIDC connection to AWS
@@ -20,8 +18,8 @@ permissions:
   contents: read
 
 jobs:
-  plan-staging:
-    name: Plan Backend (Staging/PR)
+  deploy-backend-preview:
+    name: Deploy Backend (Preview/PR)
     # Only run this job for pull request events
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -83,8 +81,8 @@ jobs:
         with:
           terraform_version: ~1.8 # Use your desired Terraform version constraint
 
-      - name: Terraform Init (Staging)
-        id: init-staging
+      - name: Terraform Init (Preview)
+        id: init-preview
         run: terraform init
         working-directory: ./terraform
         env:
@@ -99,8 +97,8 @@ jobs:
           echo "WORKSPACE_NAME=${WORKSPACE_NAME}" >> $GITHUB_OUTPUT
           echo "Sanitized workspace name: ${WORKSPACE_NAME}"
 
-      - name: Terraform Workspace Select or New (Staging)
-        id: workspace-staging
+      - name: Terraform Workspace Select or New (Preview)
+        id: workspace-preview
         # Use the sanitized branch name for the workspace
         run: |
           terraform workspace select ${{ steps.sanitize.outputs.WORKSPACE_NAME }} || terraform workspace new ${{ steps.sanitize.outputs.WORKSPACE_NAME }}
@@ -108,23 +106,32 @@ jobs:
         env:
            AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
 
-      - name: Terraform Plan (Staging)
-        id: plan-staging
-        run: terraform plan -no-color
-        # Continue on error to allow potential reporting even if plan fails
-        continue-on-error: true
+      - name: Terraform Plan (Preview)
+        id: plan-preview
+        # Save the plan to a file
+        run: terraform plan -out=tfplan -no-color
+        # Removed continue-on-error as apply depends on successful plan
+        # continue-on-error: true
         working-directory: ./terraform
         env:
            AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
            # TF_LOG: DEBUG # Uncomment for debugging Terraform issues
 
-      # Optional: Add step here to comment plan output on the PR
+      # Add Apply Step
+      - name: Terraform Apply (Preview)
+        id: apply-preview
+        run: terraform apply -auto-approve tfplan
+        working-directory: ./terraform
+        env:
+           AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+
+      # Optional: Add step here to comment plan output or apply status on the PR
       # using actions like github-script or peter-evans/create-or-update-comment
 
-      - name: Check Plan Status
-        if: steps.plan-staging.outcome == 'failure'
-        run: exit 1
-
+      # Removed Check Plan Status step as apply would fail if plan failed
+      # - name: Check Plan Status
+      #  if: steps.plan-preview.outcome == 'failure'
+      #  run: exit 1
 
   deploy-prod:
     name: Deploy Backend (Production)
