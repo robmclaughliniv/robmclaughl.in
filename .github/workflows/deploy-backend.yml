@@ -10,6 +10,8 @@ on:
     branches:
       - master # Or your main branch name
   delete: # Trigger on any delete event
+    branches: # Add explicit branch filtering here
+      - '!master' # Only trigger for non-master branches
   workflow_dispatch: # Allows manual triggering
 
 # Permissions needed for OIDC connection to AWS
