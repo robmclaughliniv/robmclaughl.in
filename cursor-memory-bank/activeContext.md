@@ -1,28 +1,23 @@
 # Active Context
 
-*This document tracks the current focus, recent activities, immediate next steps, and important decisions or patterns relevant to the ongoing work. It's a snapshot of the project's current state. **Updated: [Current Date + 3 Days]**.*
+*This document tracks the current focus, recent activities, immediate next steps, and important decisions or patterns relevant to the ongoing work. It's a snapshot of the project's current state. **Updated: [Current Date + 4 Days]**.*
 
 ## Current Focus
 
-*   **Primary:** Integrate the newly created backend API (`POST /contact`) with the frontend application. This involves creating a form or mechanism on the website to send data to the API Gateway endpoint.
-*   **Secondary:** Refine IAM permissions for the new backend deployment role (`TERRAFORM_AWS_IAM_ROLE_ARN`) to follow the principle of least privilege.
-*   **Tertiary (Recently Completed):** Resolved Terraform plan errors in GitHub Actions related to S3 module dependencies by refactoring the module (`./modules/s3`) and root configuration (`main.tf`).
-*   **Quaternary (Recently Completed):** Established and documented a local development/testing environment for the Lambda function and DynamoDB using LocalStack (`LOCAL_DEVELOPMENT.md`). Successfully tested local invocation.
-*   **Next:**
-    *   Implement baseline UI tests using Cypress, potentially including a test for the frontend-backend interaction.
+*   **Primary:** Debug the GitHub Actions trigger (`on.delete`) for the `cleanup-backend-preview` job in `deploy-backend.yml` to ensure backend preview resources are automatically destroyed when their corresponding branch is deleted.
+*   **Secondary:** Integrate the backend API (`POST /contact`) with the frontend application.
+*   **Tertiary:** Refine IAM permissions for the backend deployment role (`TERRAFORM_AWS_IAM_ROLE_ARN`).
+*   **(Recently Completed):** Successfully implemented `terraform apply` for backend preview environments in the `deploy-backend-preview` job.
+*   **(Recently Completed):** Refactored `terraform/main.tf` to make shared resources (S3, ACM, WAF, CloudFront, Route53, IAM Role) conditional, creating them only in the `prod` workspace.
 
-## Recent Changes (Since Lambda/DynamoDB Setup)
+## Recent Changes (Since LocalStack Setup)
 
-*   **Refactored Terraform S3 Module:** Modified `./modules/s3` to use an explicit `create_bucket` variable instead of deriving logic from `cloudfront_distribution_arn`. Moved the OAC S3 bucket policy definition from the module to the root `main.tf` to resolve plan-time dependency errors in CI/CD.
-*   **Implemented Lambda Handler Logic:** Updated `lambda_src/src/index.ts` to handle `APIGatewayProxyEvent`, parse JSON body, validate `name` and `message` fields, and write a record to DynamoDB using AWS SDK v3.
-*   **Implemented API Gateway Trigger:** Added Terraform configuration (`terraform/api_gateway.tf`) to create an API Gateway HTTP API with a `POST /contact` route triggering the Lambda function. Configured CORS and Lambda invocation permissions.
-*   **Added Backend CI/CD Workflow:** Created `.github/workflows/deploy-backend.yml`.
-    *   Triggers on `master` push/PR and manual dispatch.
-    *   Uses separate jobs for `plan-staging` (PRs, `dev` workspace) and `deploy-prod` (`master`, `prod` workspace).
-    *   Automates Lambda build (`pnpm run package`).
-    *   Authenticates to AWS using OIDC via `secrets.TERRAFORM_AWS_IAM_ROLE_ARN`.
-*   **Created Terraform Workspaces:** Established `dev` and `prod` workspaces in the S3 backend via `terraform workspace new`.
-*   **Identified Need for Manual Role Creation:** Confirmed the OIDC IAM role (`TERRAFORM_AWS_IAM_ROLE_ARN`) needs to be created manually in AWS before the workflow can run.
+*   **Added `terraform apply` to Backend Preview Job:** Modified the `plan-staging` job (renamed to `deploy-backend-preview`) in `deploy-backend.yml` to run `terraform apply -auto-approve tfplan`, creating actual AWS resources (Lambda, DynamoDB, APIGW) for PR branches.
+*   **Implemented Dynamic Workspaces:** The `deploy-backend-preview` job now uses Terraform workspaces named dynamically based on the sanitized branch name (e.g., `preview-<branch-name>`).
+*   **Added Backend Cleanup Job (Definition):** Defined a `cleanup-backend-preview` job in `deploy-backend.yml` with steps to run `terraform destroy` and `terraform workspace delete` for the corresponding preview workspace.
+*   **Attempted Delete Trigger Configs:** Tried several configurations for the `on.delete` trigger in `deploy-backend.yml` to activate the `cleanup-backend-preview` job (currently set to `on: delete:` with filtering in the job's `if` condition).
+*   **Made Terraform Resources Conditional:** Updated `terraform/main.tf` to use `count = terraform.workspace == "prod" ? 1 : 0` for shared resources (S3 buckets, ACM, WAF, CloudFront, Route53, IAM role) and their dependencies/outputs, preventing conflicts in preview workspaces.
+*   *(Previous changes: S3 Module Refactor, LocalStack Setup, API Implementation, Backend CI/CD Workflow creation, Terraform Workspaces)*
 
 ## Immediate Next Steps
 
@@ -33,44 +28,35 @@
 5.  ✅ API Gateway Trigger Implemented (`api_gateway.tf`).
 6.  ✅ Backend Deployment Workflow Created (`deploy-backend.yml`).
 7.  ✅ Terraform Workspaces Created (`dev`, `prod`).
-8.  ✅ **(Completed)** Terraform S3 Module Refactoring to fix CI/CD plan errors.
-9.  ✅ **(Completed)** Setup and documentation of local Lambda/DynamoDB testing environment using LocalStack (`LOCAL_DEVELOPMENT.md`).
-10. **(Manual Task)** Create OIDC IAM Role in AWS and configure `TERRAFORM_AWS_IAM_ROLE_ARN` secret in GitHub.
-11. **Next: Frontend Integration:** Build UI element (e.g., contact form) to call the `POST /contact` API endpoint.
-12. **Next: Refine IAM Permissions:** Create custom, least-privilege IAM policy for the backend deployment role.
-13. **Next: Baseline Testing:** Implement basic functional UI tests using Cypress.
+8.  ✅ Terraform S3 Module Refactoring to fix CI/CD plan errors.
+9.  ✅ Setup and documentation of local Lambda/DynamoDB testing environment using LocalStack (`LOCAL_DEVELOPMENT.md`).
+10. ✅ **(Completed)** Implemented `terraform apply` for backend previews in `deploy-backend.yml`.
+11. ✅ **(Completed)** Made shared Terraform resources (S3, ACM, WAF, etc.) conditional on `prod` workspace in `main.tf`.
+12. 🟡 **(In Progress/Blocked)** Backend Cleanup Job (`cleanup-backend-preview` in `deploy-backend.yml`) defined but **trigger (`on.delete`) is not working correctly.**
+13. **Next: Debug Delete Trigger:** Investigate why the `on.delete` trigger in `deploy-backend.yml` isn't activating the `cleanup-backend-preview` job.
+14. **Next: Frontend Integration:** Build UI element (e.g., contact form) to call the `POST /contact` API endpoint.
+15. **Next: Refine IAM Permissions:** Create custom, least-privilege IAM policy for the backend deployment role.
+16. **Next: Baseline Testing:** Implement basic functional UI tests using Cypress.
+17. **(Manual Task)** Create/Update OIDC IAM Role in AWS (`TERRAFORM_AWS_IAM_ROLE_ARN`) with necessary permissions (including WAF/ACM) and configure secret in GitHub.
 
 ## Active Decisions & Considerations
 
-*   **Terraform Structure:** Root module (`main.tf`) orchestrates calls to other modules (s3, cloudfront, acm, etc.) and defines resources like WAF ACL and the S3 OAC bucket policy.
-*   **S3 Module Design:** `./modules/s3` is designed to conditionally create S3 resources based on the `create_bucket` input variable.
-*   **Backend Deployment Strategy:** Dedicated GitHub Actions workflow (`deploy-backend.yml`) using Terraform workspaces (`dev`/`prod`) and OIDC authentication.
-*   **Authentication:** OIDC preferred over static API keys for CI/CD workflows.
-*   **Manual Setup:** The initial OIDC role for the deployment workflow requires manual creation due to the chicken-and-egg problem with Terraform permissions.
-*   **IAM Permissions (Temporary):** Using broader managed policies initially for the OIDC role, with the explicit requirement to refine them post-setup.
-*   **Local Testing:** Utilize LocalStack for emulating Lambda/DynamoDB. Invoke Lambda locally using `aws lambda invoke --endpoint-url...` with a payload simulating the API Gateway event structure (`event.body`). Prefer `aws --endpoint-url` over `awslocal` due to stability issues.
-*   (Previous decisions: Lambda/DynamoDB Management, Lambda Source Location, Packaging, etc.).
+*   **Preview Environment Resources:** Backend previews (Lambda, DynamoDB, APIGW) **will** be created via `terraform apply` in branch-specific workspaces. Shared resources (S3, CF, WAF, ACM, Route53, IAM) **will not** be created in preview workspaces.
+*   **Cleanup Strategy:** Intention is to automatically destroy preview backend resources via `terraform destroy` triggered by branch deletion. **(Currently blocked by trigger issue)**.
+*   **Terraform Structure:** Using conditional `count` based on `terraform.workspace` in `main.tf` to manage shared vs. environment-specific resources.
+*   *(Previous decisions: Backend Deployment Strategy, Auth, Manual Setup, Local Testing, etc.)*
 
 ## Key Patterns & Preferences
 
-*   Automate infrastructure deployment using Terraform and GitHub Actions.
-*   Use OIDC for secure authentication between GitHub Actions and AWS.
-*   Employ Terraform workspaces to manage different environments (`dev`, `prod`).
-*   Separate CI/CD workflows for frontend (`deploy.yml`) and backend (`deploy-backend.yml`).
-*   Handle Lambda code validation and database interaction within the Lambda handler.
-*   Use API Gateway as the HTTP frontend for Lambda functions.
-*   **Decouple Terraform resources to avoid plan-time dependency errors, managing dependent resources (like bucket policies needing ARNs) at a higher level in the configuration.**
-*   **Simulate API Gateway event structure (`event.body`) when invoking Lambda directly for local testing.**
-*   (Previous patterns: Next.js SSG, Tailwind, IaC, etc.).
+*   Automate infrastructure deployment using Terraform and GitHub Actions (`apply` for previews, `destroy` for cleanup).
+*   Use dynamic Terraform workspaces (`preview-<branch-name>`) for backend previews.
+*   Use conditional resource creation (`count`) in Terraform to manage shared infrastructure vs. per-environment components.
+*   *(Previous patterns: OIDC, Separate Workflows, API Gateway, Utility CSS, SSG etc.)*
 
-## Learnings & Insights (Recent - API, CI/CD, Terraform Refactor, LocalStack)
+## Learnings & Insights (Recent - Backend Previews & Cleanup Attempts)
 
-*   Terraform `count` arguments cannot depend on values unknown until the apply phase. Refactoring modules to use explicit boolean inputs for conditional creation and defining dependent resources (like policies) at the root level resolves these issues.
-*   GitHub Actions workflows require credentials *before* Terraform can run, necessitating manual creation of the initial OIDC role Terraform will use.
-*   OIDC provides a secure alternative to storing long-lived AWS keys in GitHub Secrets.
-*   Separating backend deployment into its own workflow improves clarity and separation of concerns.
-*   API Gateway V2 (HTTP API) provides a simpler, cheaper alternative to REST APIs for basic Lambda integrations.
-*   Terraform workspaces are effective for managing state across different deployment environments (dev/staging vs. production).
-*   Windows long path limitations can interfere with `pip install` for packages with deep directory structures; enabling Win32 long path support is the standard fix.
-*   The `awslocal` wrapper can be unstable in some terminal environments (e.g., Git Bash on Windows); using `aws --endpoint-url=...` directly is more reliable.
-*   Direct `aws lambda invoke` passes the payload as the root `event` object. If Lambda code expects an API Gateway structure, the payload must be wrapped (e.g., `{"body": "..."}`) to simulate the expected input. 
+*   The `terraform apply` command can be successfully integrated into a PR workflow to create ephemeral backend resources.
+*   Using `count = terraform.workspace == "prod" ? 1 : 0` is an effective pattern for managing shared resources that should only exist in production. Remember to update references using `[0]` index.
+*   The GitHub Actions `on.delete` trigger might have nuances or syntax requirements that aren't immediately obvious or behave inconsistently; relying on job-level `if` conditions for filtering seems more robust if trigger-level filtering causes issues. **(Still requires debugging)**.
+*   Ensure the IAM role assumed by Terraform has permissions for *all* actions Terraform might perform in *any* workspace (e.g., WAF/ACM actions even if those resources are conditional, as Terraform might still read them).
+*   *(Previous learnings: Terraform dependencies, OIDC setup, API Gateway V2, LocalStack nuances etc.)* 

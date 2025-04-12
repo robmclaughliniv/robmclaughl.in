@@ -1,8 +1,8 @@
 # Project Progress
 
-*This document tracks the overall status of the project, what components are functional, what remains to be built, known issues, and the evolution of key decisions. **Updated: [Current Date + 3 Days]**.*
+*This document tracks the overall status of the project, what components are functional, what remains to be built, known issues, and the evolution of key decisions. **Updated: [Current Date + 4 Days]**.*
 
-## Current Status (as of [Current Date + 3 Days])
+## Current Status (as of [Current Date + 4 Days])
 
 *   Production site live at `robmclaughl.in`.
 *   **Ephemeral Preview Environments implemented and operational:**
@@ -33,6 +33,13 @@
     *   A documented process (`LOCAL_DEVELOPMENT.md`) exists for setting up a local Lambda/DynamoDB testing environment using LocalStack.
     *   Local testing of the Lambda function (via direct invocation simulating API Gateway) has been successful.
 *   Previous items (security hardening, CSP fix, IaC setup, frontend CI/CD, UI components) remain complete.
+*   **(NEW) Backend Preview Environments are now created:**
+    *   `deploy-backend.yml` workflow successfully runs `terraform apply` on PRs.
+    *   Creates backend resources (Lambda, DynamoDB, APIGW, etc.) in dynamic workspaces (e.g., `preview-<branch-name>`).
+    *   Shared resources (S3, CF, WAF, ACM, Route53, IAM) are correctly skipped in preview workspaces due to conditional Terraform configuration (`count`).
+*   **(NEW) Backend Cleanup Job Defined but NOT Triggering:**
+    *   A `cleanup-backend-preview` job exists in `deploy-backend.yml` designed to destroy preview resources.
+    *   The `on.delete` trigger is **not currently working**, so cleanup does not happen automatically.
 
 ## What Works
 
@@ -67,37 +74,36 @@
     *   Security measures (OAC, logging, security headers, OIDC, WAF, Lambda IAM).
     *   Automates Lambda build (`pnpm run package`).
     *   Authenticates to AWS using OIDC via `secrets.TERRAFORM_AWS_IAM_ROLE_ARN`.
-*   **Local Development Setup:** Established and documented (`LOCAL_DEVELOPMENT.md`) a method for local Lambda/DynamoDB testing using LocalStack, preferring `aws --endpoint-url` and simulating API Gateway events for direct invocation ([Current Date + 3 Days]).
+*   **Local Development Setup:** Established and documented (`LOCAL_DEVELOPMENT.md`) a method for local Lambda/DynamoDB testing using LocalStack, preferring `aws --endpoint-url` and simulating API Gateway events for direct invocation ([Current Date + 4 Days]).
+*   **Backend (API & Infrastructure - Production):**
+    *   All resources (Lambda, DynamoDB, APIGW, IAM, etc.) managed by Terraform in `prod` workspace.
+    *   Lambda handler validates and writes data.
+    *   API Gateway triggers Lambda.
+*   **Backend (API & Infrastructure - Previews):**
+    *   `deploy-backend.yml` workflow successfully **creates/updates** preview-specific backend resources (Lambda, DynamoDB, APIGW, IAM exec role) in dynamic workspaces via `terraform apply`.
+*   **Infrastructure & Deployment (Preview):**
+    *   Terraform scripts manage preview backend resources in dynamic workspaces.
+    *   Frontend CI/CD (`deploy.yml`) operational for previews (S3 sync, CF invalidation).
+    *   Backend CI/CD (`deploy-backend.yml`) operational for **deploying** previews (`terraform apply` in `preview-*` workspace).
 
 ## What's Left to Build / Next Steps
 
-*   **Frontend-Backend Integration:**
-    *   Implement frontend form (e.g., a contact form) to POST data to the `/contact` API Gateway endpoint.
-*   **Testing:**
-    *   Implement baseline UI tests using Cypress.
-    *   Consider adding tests for the Lambda function logic.
+*   **Backend Cleanup Trigger:** **Fix the `on.delete` trigger** in `.github/workflows/deploy-backend.yml` so the `cleanup-backend-preview` job runs automatically when a branch is deleted.
+*   **Frontend-Backend Integration:** Implement frontend form to call the `/contact` API.
+*   **Testing:** Implement Cypress UI tests and potentially Lambda tests.
 *   **Infrastructure & Security:**
-    *   **Refine IAM permissions for the backend deployment role (`TERRAFORM_AWS_IAM_ROLE_ARN`)**. Replace broad `FullAccess` policies with least-privilege custom policies.
+    *   Refine IAM permissions for the backend deployment role (`TERRAFORM_AWS_IAM_ROLE_ARN`).
     *   Manage the CloudFront Function (`append-index-html`) via Terraform.
-    *   *(Lower Priority)* Automate the *local* Lambda build/package step if needed outside CI/CD.
-*   **Content & Refinement:**
-    *   Ongoing performance monitoring and optimization.
-    *   Further UI/UX enhancements.
-*   **Future Phases (Post-MVP):**
-    *   Add analytics.
-    *   Consider blog functionality.
-    *   Implement more dynamic content using Lambda/DynamoDB/API Gateway.
+*   **Content & Refinement:** Ongoing UI/UX/performance improvements.
 
 ## Known Issues & Bugs
 
-*   **Security:** The IAM Role used by the backend deployment workflow (`TERRAFORM_AWS_IAM_ROLE_ARN`) currently has overly broad permissions (e.g., `IAMFullAccess`) and needs refinement.
-*   **Integration:** Frontend does not yet call the backend API Gateway endpoint.
-*   *(Minor)* Lambda deployment locally requires a manual `pnpm run package` step before `terraform apply` (automated in CI/CD).
-*   *(Minor)* Baseline UI tests are not yet implemented.
-*   *(Minor)* Lambda tests are not implemented.
-*   *(Minor)* CloudFront Function `append-index-html` is managed manually outside of Terraform.
-*   *(Resolved)* `awslocal` command instability in Git Bash/MINGW64 (workaround: use `aws --endpoint-url`).
-*   *(Resolved)* Incorrect payload structure for direct `aws lambda invoke` (workaround: simulate API Gateway `event.body` structure in `payload.json`).
+*   **Critical:** **Backend Preview Cleanup Not Triggering:** The `cleanup-backend-preview` job in `deploy-backend.yml` does not run when a branch is deleted due to issues with the `on.delete` trigger configuration.
+*   **Security:** Backend deployment role (`TERRAFORM_AWS_IAM_ROLE_ARN`) needs permission refinement (least privilege).
+*   **Integration:** Frontend does not yet call the backend API.
+*   *(Minor)* Baseline UI/Lambda tests not implemented.
+*   *(Minor)* CloudFront Function `append-index-html` is managed manually.
+*   *(Minor)* Local Lambda deployment requires manual `pnpm run package` (automated in CI/CD).
 
 ## Recent Terraform Improvements (Lambda/DynamoDB Setup)
 
@@ -157,4 +163,7 @@
 *   **Authentication Choice:** Opted for OIDC over static API keys for the backend deployment workflow due to enhanced security ([Current Date + 2 Days]).
 *   **Manual Step:** Acknowledged the OIDC IAM Role for the backend workflow requires manual creation outside the primary Terraform apply ([Current Date + 2 Days]).
 *   **Terraform S3 Module Refactoring:** Refactored the S3 module (`./modules/s3`) to use an explicit `create_bucket` input variable and moved the OAC S3 bucket policy definition to the root `main.tf` to resolve plan-time dependency errors encountered during CI/CD runs ([Current Date + 3 Days]).
-*   **Local Development Setup:** Established and documented (`LOCAL_DEVELOPMENT.md`) a method for local Lambda/DynamoDB testing using LocalStack, preferring `aws --endpoint-url` and simulating API Gateway events for direct invocation ([Current Date + 3 Days]). 
+*   **Local Development Setup:** Established and documented (`LOCAL_DEVELOPMENT.md`) a method for local Lambda/DynamoDB testing using LocalStack, preferring `aws --endpoint-url` and simulating API Gateway events for direct invocation ([Current Date + 3 Days]).
+*   **Implemented Backend Preview Deployments:** Modified `deploy-backend.yml` to run `terraform apply` in dynamic workspaces (`preview-<branch>`) for PRs, creating ephemeral backend resources ([Current Date + 4 Days]).
+*   **Conditional Shared Resources:** Updated `terraform/main.tf` to use `count = terraform.workspace == "prod" ? 1 : 0` for shared infrastructure (S3, WAF, ACM, CF, Route53, IAM), preventing conflicts during preview deployments ([Current Date + 4 Days]).
+*   **Backend Cleanup Strategy:** Defined `cleanup-backend-preview` job to run `terraform destroy` on branch delete, but the trigger mechanism is currently non-functional ([Current Date + 4 Days]). 
