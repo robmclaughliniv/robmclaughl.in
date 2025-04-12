@@ -9,6 +9,7 @@ on:
     types: [opened, synchronize, reopened]
     branches:
       - master # Or your main branch name
+  delete: # Trigger on any delete event
   workflow_dispatch: # Allows manual triggering
 
 # Permissions needed for OIDC connection to AWS
@@ -87,10 +88,20 @@ jobs:
         env:
            AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
 
-      - name: Terraform Workspace Select (Staging)
+      - name: Get Sanitized Branch Name for Workspace
+        id: sanitize
+        run: |
+          # Sanitize branch name (keep alphanumeric, hyphen, truncate) and prefix
+          BRANCH_NAME=$(echo "${{ github.head_ref }}" | sed 's/[^a-zA-Z0-9-]/-/g' | cut -c1-63)
+          WORKSPACE_NAME="preview-${BRANCH_NAME}"
+          echo "WORKSPACE_NAME=${WORKSPACE_NAME}" >> $GITHUB_OUTPUT
+          echo "Sanitized workspace name: ${WORKSPACE_NAME}"
+
+      - name: Terraform Workspace Select or New (Staging)
         id: workspace-staging
-        # Assumes 'dev' workspace exists and corresponds to staging/PR environment
-        run: terraform workspace select dev || terraform workspace new dev
+        # Use the sanitized branch name for the workspace
+        run: |
+          terraform workspace select ${{ steps.sanitize.outputs.WORKSPACE_NAME }} || terraform workspace new ${{ steps.sanitize.outputs.WORKSPACE_NAME }}
         working-directory: ./terraform
         env:
            AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
@@ -195,3 +206,85 @@ jobs:
         working-directory: ./terraform
         env:
            AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }} 
+
+  cleanup-backend-preview:
+    name: Cleanup Backend Preview Resources
+    # Run only on branch deletes, and ignore deletes of the master branch
+    if: >
+      github.event_name == 'delete' &&
+      github.event.ref_type == 'branch' &&
+      github.event.ref != 'refs/heads/master'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # No need to build Lambda for destroy
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # Role needs destroy permissions for all managed resources
+          role-to-assume: ${{ secrets.TERRAFORM_AWS_IAM_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-west-2' }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.8
+
+      - name: Get Sanitized Deleted Branch Name for Workspace
+        id: sanitize-deleted
+        run: |
+          # github.event.ref is like 'refs/heads/branch-name'
+          # Use same sanitization logic as in plan-staging job
+          BRANCH_NAME=$(echo "${{ github.event.ref }}" | sed 's#refs/heads/##' | sed 's/[^a-zA-Z0-9-]/-/g' | cut -c1-63)
+          WORKSPACE_NAME="preview-${BRANCH_NAME}"
+          echo "WORKSPACE_NAME=${WORKSPACE_NAME}" >> $GITHUB_OUTPUT
+          echo "Deleted branch ref: ${{ github.event.ref }}"
+          echo "Sanitized workspace name to clean: ${WORKSPACE_NAME}"
+
+      - name: Terraform Init (Cleanup)
+        id: init-cleanup
+        run: terraform init -no-color
+        working-directory: ./terraform
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+
+      - name: Terraform Workspace Select (Cleanup)
+        id: workspace-cleanup-select
+        # Select the workspace corresponding to the deleted branch
+        run: terraform workspace select ${{ steps.sanitize-deleted.outputs.WORKSPACE_NAME }}
+        working-directory: ./terraform
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+        # Fail fast if workspace doesn't exist (implies nothing to destroy)
+
+      - name: Terraform Destroy (Cleanup)
+        id: destroy-cleanup
+        # Destroy resources in the selected workspace
+        run: terraform destroy -auto-approve -no-color
+        working-directory: ./terraform
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+
+      - name: Terraform Workspace Select Default (Cleanup)
+        id: workspace-cleanup-select-default
+        # Switch back to default workspace before deleting the preview one
+        run: terraform workspace select default
+        working-directory: ./terraform
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+        # Always run even if destroy failed, to attempt workspace deletion
+        if: always()
+
+      - name: Terraform Workspace Delete (Cleanup)
+        id: workspace-cleanup-delete
+        # Delete the preview workspace itself
+        run: terraform workspace delete ${{ steps.sanitize-deleted.outputs.WORKSPACE_NAME }}
+        working-directory: ./terraform
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+        # Always run even if destroy failed/workspace select failed, to attempt cleanup
+        if: always() 
