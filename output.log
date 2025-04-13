@@ -1,0 +1,1 @@
+{"statusCode":201,"headers":{"Content-Type":"application/json","Access-Control-Allow-Origin":"*","Access-Control-Allow-Credentials":true},"body":"{\"message\":\"Record successfully created.\",\"id\":\"3d9242d8-2a9e-408f-ba90-9c7d73e65cd2\"}"}

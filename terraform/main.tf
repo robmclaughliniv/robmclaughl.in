@@ -42,27 +42,31 @@ terraform {
   }
 }
 
-# Phase 1: Create S3 buckets without bucket policies
+# S3 bucket for website content
 module "website_bucket" {
   source = "./modules/s3"
   bucket_name = "robmclaughl-in-website-bucket"
-  # CloudFront ARN will be applied in Phase 3
+  # Only create the bucket in the production workspace
+  create_bucket = terraform.workspace == "prod"
 }
 
 # S3 bucket for CloudFront logs
 module "logs_bucket" {
   source = "./modules/s3"
   bucket_name = "robmclaughl-in-logs-bucket"
-  is_logs_bucket = true  # Enable ACLs for CloudFront logging
-  # CloudFront ARN will be applied in Phase 3
+  is_logs_bucket = true # Enable ACLs for CloudFront logging
+  # Only create the bucket in the production workspace
+  create_bucket = terraform.workspace == "prod"
 }
 
-# ACM Certificate
+# ACM Certificate (Only create in prod)
 module "acm" {
+  count  = terraform.workspace == "prod" ? 1 : 0
   source = "./modules/acm"
   domain_name = "robmclaughl.in"
   subject_alternative_names = ["www.robmclaughl.in"]
-  zone_id = module.route53.zone_id
+  # Reference route53 module using count index
+  zone_id = module.route53[0].zone_id
   
   providers = {
     aws           = aws # Explicitly pass the default provider
@@ -70,32 +74,9 @@ module "acm" {
   }
 }
 
-# CloudFront Distribution
-module "cloudfront" {
-  source = "./modules/cloudfront"
-  bucket_name = module.website_bucket.bucket_name
-  bucket_regional_domain_name = module.website_bucket.bucket_regional_domain_name
-  bucket_arn = module.website_bucket.bucket_arn
-  acm_certificate_arn = module.acm.certificate_arn
-  domain_names = ["robmclaughl.in", "www.robmclaughl.in"]
-  logs_bucket = module.logs_bucket.bucket_name
-  logs_prefix = "cloudfront-logs/"
-  index_rewrite_paths = ["/branch/*"] # Add list of paths requiring index rewrite
-  waf_web_acl_arn = aws_wafv2_web_acl.main_waf_acl.arn # Pass the WAF ARN
-}
-
-# Route53 configuration
-module "route53" {
-  source = "./modules/route53"
-  domain_name = "robmclaughl.in"
-  zone_id     = "Z2PPIVE6CKK74T" # Pass the correct Zone ID directly (without trailing X)
-  cloudfront_distribution_domain_name = module.cloudfront.distribution_domain_name
-  cloudfront_distribution_zone_id = module.cloudfront.distribution_zone_id
-}
-
-# WAF Web ACL for CloudFront
-# Note: Rules can incur costs based on usage.
+# WAF Web ACL for CloudFront (Only create in prod)
 resource "aws_wafv2_web_acl" "main_waf_acl" {
+  count       = terraform.workspace == "prod" ? 1 : 0
   provider    = aws.us_east_1 # Specify the correct provider for CLOUDFRONT scope
   name        = "robmclaughl-in-waf-acl"
   description = "WAF Web ACL for robmclaughl.in CloudFront distribution"
@@ -153,47 +134,96 @@ resource "aws_wafv2_web_acl" "main_waf_acl" {
   }
 }
 
-# IAM Role for GitHub Actions
-module "github_actions" {
-  source = "./modules/iam"
+# CloudFront Distribution (This might need adjustment depending on whether previews need CF)
+# Assuming for now that CloudFront is also primarily for prod, but adjust if needed.
+# If previews need CF, we might need separate distributions or more complex logic.
+module "cloudfront" {
+  count = terraform.workspace == "prod" ? 1 : 0 # Make CloudFront conditional too
+  source = "./modules/cloudfront"
   bucket_name = module.website_bucket.bucket_name
+  bucket_regional_domain_name = module.website_bucket.bucket_regional_domain_name
   bucket_arn = module.website_bucket.bucket_arn
-  cloudfront_distribution_arn = module.cloudfront.distribution_arn
-  cloudfront_distribution_id = module.cloudfront.distribution_id
-  github_owner = "robmclaughliniv" # Update with your actual GitHub username
-  github_repo = "robmclaughl.in" # Update with your actual repository name
-  
-  # Ensure this runs after the buckets, CloudFront, and bucket policies are created
+  # Reference conditional resources using count index
+  acm_certificate_arn = module.acm[0].certificate_arn
+  domain_names = ["robmclaughl.in", "www.robmclaughl.in"]
+  logs_bucket = module.logs_bucket.bucket_name
+  logs_prefix = "cloudfront-logs/"
+  index_rewrite_paths = ["/branch/*"] # Add list of paths requiring index rewrite
+  # Reference conditional resources using count index
+  waf_web_acl_arn = aws_wafv2_web_acl.main_waf_acl[0].arn # Pass the WAF ARN
+
+  # Ensure CloudFront waits for the WAF ACL
+  # Reference conditional resources using count index
+  depends_on = [aws_wafv2_web_acl.main_waf_acl[0]]
+}
+
+# S3 Bucket Policy for CloudFront OAC (Conditional based on CloudFront existing)
+data "aws_iam_policy_document" "s3_policy_oac" {
+  count = terraform.workspace == "prod" ? 1 : 0 # Make conditional
+  statement {
+    sid       = "AllowCloudFrontOAC"
+    actions   = ["s3:GetObject"]
+    resources = ["${module.website_bucket.bucket_arn}/*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      # Reference conditional resource using count index
+      values   = [module.cloudfront[0].distribution_arn] # Use CloudFront module output
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "bucket_policy_oac" {
+  count  = terraform.workspace == "prod" ? 1 : 0 # Make conditional
+  bucket = module.website_bucket.bucket_name # Target the website bucket
+  policy = data.aws_iam_policy_document.s3_policy_oac[0].json
+
   depends_on = [
     module.website_bucket,
-    module.logs_bucket,
-    module.cloudfront,
-    module.website_bucket_policy,
-    module.logs_bucket_policy
+    # Reference conditional resource using count index
+    module.cloudfront[0] # Ensure CloudFront distribution exists before applying policy
   ]
 }
 
-# Phase 3: Apply bucket policies with CloudFront ARN
-module "website_bucket_policy" {
-  source = "./modules/s3"
+# Route53 configuration (Only create in prod)
+module "route53" {
+  count  = terraform.workspace == "prod" ? 1 : 0
+  source = "./modules/route53"
+  domain_name = "robmclaughl.in"
+  zone_id     = "Z2PPIVE6CKK74T" # Pass the correct Zone ID directly (without trailing X)
+  # Reference conditional resource using count index
+  cloudfront_distribution_domain_name = module.cloudfront[0].distribution_domain_name
+  cloudfront_distribution_zone_id = module.cloudfront[0].distribution_zone_id
+}
+
+# IAM Role for GitHub Actions (Only create in prod)
+module "github_actions" {
+  count  = terraform.workspace == "prod" ? 1 : 0
+  source = "./modules/iam"
   bucket_name = module.website_bucket.bucket_name
-  cloudfront_distribution_arn = module.cloudfront.distribution_arn
+  bucket_arn = module.website_bucket.bucket_arn
+  # Reference conditional resource using count index
+  cloudfront_distribution_arn = module.cloudfront[0].distribution_arn
+  cloudfront_distribution_id = module.cloudfront[0].distribution_id
+  github_owner = "robmclaughliniv" # Update with your actual GitHub username
+  github_repo = "robmclaughl.in" # Update with your actual repository name
   
-  # Ensure this runs after the buckets and CloudFront are created
-  depends_on = [module.website_bucket, module.cloudfront]
+  depends_on = [
+    module.website_bucket,
+    module.logs_bucket,
+    # Reference conditional resources using count index
+    module.cloudfront[0],
+    aws_s3_bucket_policy.bucket_policy_oac[0] # Depend on the newly added bucket policy
+  ]
 }
 
-module "logs_bucket_policy" {
-  source = "./modules/s3"
-  bucket_name = module.logs_bucket.bucket_name
-  cloudfront_distribution_arn = module.cloudfront.distribution_arn
-  is_logs_bucket = true  # Enable ACLs for CloudFront logging
-  
-  # Ensure this runs after the buckets and CloudFront are created
-  depends_on = [module.logs_bucket, module.cloudfront]
-}
-
-# Output values
+# Output values (Conditional)
 output "website_bucket_name" {
   description = "Name of the S3 bucket hosting the website content"
   value       = module.website_bucket.bucket_name
@@ -201,12 +231,12 @@ output "website_bucket_name" {
 
 output "cloudfront_distribution_id" {
   description = "ID of the CloudFront distribution"
-  value       = module.cloudfront.distribution_id
+  value       = terraform.workspace == "prod" ? module.cloudfront[0].distribution_id : "N/A (Not Prod)"
 }
 
 output "cloudfront_domain_name" {
   description = "Domain name of the CloudFront distribution"
-  value       = module.cloudfront.distribution_domain_name
+  value       = terraform.workspace == "prod" ? module.cloudfront[0].distribution_domain_name : "N/A (Not Prod)"
 }
 
 output "website_url" {
@@ -217,10 +247,10 @@ output "website_url" {
 # Add WAF ACL ARN output
 output "waf_web_acl_arn" {
   description = "ARN of the WAF Web ACL associated with CloudFront"
-  value       = aws_wafv2_web_acl.main_waf_acl.arn
+  value       = terraform.workspace == "prod" ? aws_wafv2_web_acl.main_waf_acl[0].arn : "N/A (Not Prod)"
 }
 
 output "github_actions_role_arn" {
   description = "ARN of the IAM role for GitHub Actions"
-  value       = module.github_actions.role_arn
+  value       = terraform.workspace == "prod" ? module.github_actions[0].role_arn : "N/A (Not Prod)"
 }
