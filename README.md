@@ -2,6 +2,30 @@
 
 This repository contains the source code for Rob McLaughlin's personal website ([robmclaughl.in](https://robmclaughl.in)). It's a single-page application built with Next.js, React, TailwindCSS, and deployed on AWS using Terraform and GitHub Actions.
 
+## Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+| Document | Description |
+|----------|-------------|
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design and technical patterns |
+| [TECHNICAL_DEBT.md](docs/TECHNICAL_DEBT.md) | Known issues and improvement areas |
+| [FEATURE_BACKLOG.md](docs/FEATURE_BACKLOG.md) | Planned features by priority |
+| [AGENT_QUEUE.md](docs/AGENT_QUEUE.md) | Ready-to-implement tasks |
+| [TODO.md](docs/TODO.md) | Project roadmap and milestones |
+| [VIBE_GENERATOR.md](docs/VIBE_GENERATOR.md) | Flagship app specification |
+| [API_INTEGRATION.md](docs/API_INTEGRATION.md) | External API documentation |
+| [SECURITY.md](docs/SECURITY.md) | Security requirements and guidelines |
+| [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deployment procedures |
+| [CONTRIBUTING.md](docs/CONTRIBUTING.md) | Contribution guidelines |
+| [APPS.md](docs/APPS.md) | Multi-app architecture guide |
+
+### For AI Agents
+
+If you're a Claude Code agent working on this project, start with:
+- [.claude/CLAUDE.md](.claude/CLAUDE.md) - Master agent documentation
+- [docs/AGENT_QUEUE.md](docs/AGENT_QUEUE.md) - Available tasks
+
 ## Getting Started (Local Development)
 
 Follow these steps to set up the project for local development:
