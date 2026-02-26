@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Github, Linkedin, Mail, Music } from "lucide-react"
+import { Github, Linkedin, Mail, Music, FileText } from "lucide-react"
 import { Waveform } from "@/components/waveform"
 import { HeroBackground } from "@/components/HeroBackground"
 import { useEffect } from "react"
@@ -102,6 +102,25 @@ export default function Home() {
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Email</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="box-flicker w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
+                    aria-label="Resume"
+                    asChild
+                  >
+                    <a href="/pdf/resume.pdf" target="_blank" rel="noopener noreferrer">
+                      <FileText className="w-7 h-7" />
+                    </a>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Resume</p>
                 </TooltipContent>
               </Tooltip>
             </nav>
