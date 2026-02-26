@@ -48,81 +48,93 @@ export default function Home() {
           {/* Social links section with larger icons and enhanced hover effects */}
           <TooltipProvider>
             <nav className="flex items-center justify-center gap-6 mb-12">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="box-flicker w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
-                    aria-label="GitHub"
-                    asChild
-                  >
-                    <a href="https://github.com/robmclaughliniv" target="_blank" rel="noopener noreferrer">
-                      <Github className="w-7 h-7" />
-                    </a>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>GitHub</p>
-                </TooltipContent>
-              </Tooltip>
+              <div className="flex flex-col items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="box-flicker w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
+                      aria-label="GitHub"
+                      asChild
+                    >
+                      <a href="https://github.com/robmclaughliniv" target="_blank" rel="noopener noreferrer">
+                        <Github className="w-7 h-7" />
+                      </a>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>GitHub</p>
+                  </TooltipContent>
+                </Tooltip>
+                <span className="text-xs font-mono text-zinc-500">GitHub</span>
+              </div>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="box-flicker w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
-                    aria-label="LinkedIn"
-                    asChild
-                  >
-                    <a href="https://linkedin.com/in/robertmclaughliniv" target="_blank" rel="noopener noreferrer">
-                      <Linkedin className="w-7 h-7" />
-                    </a>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>LinkedIn</p>
-                </TooltipContent>
-              </Tooltip>
+              <div className="flex flex-col items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="box-flicker w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
+                      aria-label="LinkedIn"
+                      asChild
+                    >
+                      <a href="https://linkedin.com/in/robertmclaughliniv" target="_blank" rel="noopener noreferrer">
+                        <Linkedin className="w-7 h-7" />
+                      </a>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>LinkedIn</p>
+                  </TooltipContent>
+                </Tooltip>
+                <span className="text-xs font-mono text-zinc-500">LinkedIn</span>
+              </div>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="box-flicker w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
-                    aria-label="Email"
-                    asChild
-                  >
-                    <a href="mailto:robmclaughliniv@gmail.com">
-                      <Mail className="w-7 h-7" />
-                    </a>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Email</p>
-                </TooltipContent>
-              </Tooltip>
+              <div className="flex flex-col items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="box-flicker w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
+                      aria-label="Email"
+                      asChild
+                    >
+                      <a href="mailto:robmclaughliniv@gmail.com">
+                        <Mail className="w-7 h-7" />
+                      </a>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Email</p>
+                  </TooltipContent>
+                </Tooltip>
+                <span className="text-xs font-mono text-zinc-500">Email</span>
+              </div>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="box-flicker w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
-                    aria-label="Resume"
-                    asChild
-                  >
-                    <a href="/pdf/resume.pdf" target="_blank" rel="noopener noreferrer">
-                      <FileText className="w-7 h-7" />
-                    </a>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Resume</p>
-                </TooltipContent>
-              </Tooltip>
+              <div className="flex flex-col items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="box-flicker w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
+                      aria-label="Resume"
+                      asChild
+                    >
+                      <a href="/pdf/resume.pdf" target="_blank" rel="noopener noreferrer">
+                        <FileText className="w-7 h-7" />
+                      </a>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Resume</p>
+                  </TooltipContent>
+                </Tooltip>
+                <span className="text-xs font-mono text-zinc-500">Resume</span>
+              </div>
             </nav>
           </TooltipProvider>
 
