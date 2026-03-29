@@ -6,15 +6,16 @@ import { HeroBackground } from "@/components/HeroBackground"
 
 export default function Home() {
   return (
-    <main className="crt-flicker relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
+    <main id="main-content" className="crt-flicker relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
       <HeroBackground 
         videoSrc="/videos/bg-sand.mp4" 
         mobileBackgroundImage="/placeholder.svg"
         overlayColor="rgba(13, 16, 45, 0.5)"
       >
         <div className="relative z-10 flex flex-col items-center justify-center max-w-2xl mx-auto text-center h-full my-auto drop-shadow-2xl">
-          {/* Decorative elements */}
-          <Waveform className="absolute -bottom-16 -right-16 w-48 h-12 text-accent/20 animate-pulse-slow hidden md:block" />
+          <div className="absolute -bottom-16 -right-16 w-48 h-12 animate-pulse-slow hidden md:block" aria-hidden="true">
+            <Waveform className="w-full h-full text-accent/20" />
+          </div>
 
           {/* Header section with pixelated font and neon glow */}
           <header className="mb-8">
@@ -22,9 +23,9 @@ export default function Home() {
               Rob McLaughlin
             </h1>
             <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <Music className="size-4 text-accent" />
+              <Music className="size-4 text-accent" aria-hidden="true" />
               <p className="text-flicker text-lg md:text-xl font-mono drop-shadow-lg">Engineering Manager</p>
-              <Music className="size-4 text-accent" />
+              <Music className="size-4 text-accent" aria-hidden="true" />
             </div>
             <div className="mt-4 w-24 h-1 bg-gradient-to-r from-transparent via-accent to-transparent mx-auto drop-shadow-xl"></div>
           </header>
@@ -38,7 +39,7 @@ export default function Home() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-all duration-300 icon-glow shadow-lg"
+                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-colors duration-300 icon-glow shadow-lg"
                       aria-label="GitHub"
                       asChild
                     >
@@ -60,7 +61,7 @@ export default function Home() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-all duration-300 icon-glow shadow-lg"
+                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-colors duration-300 icon-glow shadow-lg"
                       aria-label="LinkedIn"
                       asChild
                     >
@@ -82,7 +83,7 @@ export default function Home() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-all duration-300 icon-glow shadow-lg"
+                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-colors duration-300 icon-glow shadow-lg"
                       aria-label="Email"
                       asChild
                     >
@@ -104,7 +105,7 @@ export default function Home() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-all duration-300 icon-glow shadow-lg"
+                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-colors duration-300 icon-glow shadow-lg"
                       aria-label="Resume"
                       asChild
                     >

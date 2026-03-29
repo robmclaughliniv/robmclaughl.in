@@ -311,3 +311,29 @@
   filter: drop-shadow(0 0 5px theme("colors.pink.500")) drop-shadow(0 0 10px theme("colors.pink.400"));
   transform: scale(1.05);
 }
+
+/* Eliminate 300ms tap delay on mobile */
+@layer base {
+  html {
+    touch-action: manipulation;
+  }
+}
+
+/* Respect prefers-reduced-motion: disable CRT flicker/scanline effects */
+@media (prefers-reduced-motion: reduce) {
+  .crt-flicker,
+  .text-flicker,
+  .box-flicker {
+    animation: none !important;
+  }
+
+  .crt-screen::before,
+  .crt-screen::after {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+
+  .icon-glow:hover {
+    transform: none;
+  }
+}
