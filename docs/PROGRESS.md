@@ -68,6 +68,29 @@ Example usage in page.tsx:
 - ✅ Configured deployment environment variables
 - ✅ Successfully deployed to production
 
+### Accessibility Improvements (March 29, 2026)
+- ✅ Added skip-to-content link in layout for keyboard navigation
+- ✅ Added `id="main-content"` target on the main content area
+- ✅ Added `prefers-reduced-motion` media query to disable CRT flicker, text flicker, box flicker animations, and icon-glow hover transforms
+- ✅ Added `touch-action: manipulation` on `<html>` to eliminate 300ms tap delay on mobile
+- ✅ Added `focus-visible` ring styles to the "Go home" link on the 404 page
+- ✅ Marked decorative elements (`Music` icons, `Waveform`) with `aria-hidden="true"`
+- ✅ Set explicit `dark` class and `colorScheme: "dark"` on `<html>` for reliable dark mode
+
+### Component Composition Improvements (March 29, 2026)
+- ✅ Removed `disableEffects` prop from `HeroBackground` component, simplifying its API
+- ✅ Flattened conditional rendering — overlay, noise texture, and inner shadow layers are now always rendered
+- ✅ Cleaned up callback dependencies in `handleMouseEnter`/`handleMouseLeave`
+
+### Design & Animation Refinements (March 29, 2026)
+- ✅ Reworked neon text effect from `text-shadow` to `filter: drop-shadow()` to avoid conflicts with text-flicker animation
+- ✅ Updated glow colors from Tailwind theme references to explicit `rgba(255, 102, 199, ...)` values for consistency
+- ✅ Added `will-change: filter` to `.box-flicker` for GPU-optimized rendering
+- ✅ Box-flicker animation now pauses on hover so icons are stable when interacted with
+- ✅ Added explicit `transition` for `filter` and `transform` on `.icon-glow`
+- ✅ Scoped social button transitions to `transition-[color,background-color]` to prevent filter/transform interference
+- ✅ Removed redundant `drop-shadow` utilities from the heading and bio section
+
 ## In Progress
 - Content refinement
 - Performance testing
@@ -106,4 +129,4 @@ Example usage in page.tsx:
 - ✅ Updated GitHub Actions workflow to use pnpm and removed redundant flags
 - ✅ Enabled S3 backend for Terraform state with DynamoDB locking
 
-*Last updated: April 4, 2025*
+*Last updated: March 29, 2026*

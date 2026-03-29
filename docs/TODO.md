@@ -39,9 +39,9 @@ Phase 5: Polish & Scale
 - [x] Catalog technical debt (`docs/TECHNICAL_DEBT.md`)
 - [x] Define feature backlog (`docs/FEATURE_BACKLOG.md`)
 - [x] Establish task queue (`docs/AGENT_QUEUE.md`)
-- [ ] Fix duplicate hooks (TD-003, TD-004)
+- [ ] Fix duplicate hooks (TASK-004)
 - [ ] Remove console.log statements (TD-006)
-- [ ] Fix ESLint/TypeScript errors (TD-001)
+- [ ] Fix ESLint/TypeScript errors (TASK-003)
 - [ ] Update package.json name (TD-008)
 
 ### Success Criteria
@@ -56,16 +56,35 @@ Phase 5: Polish & Scale
 ## Phase 2: Vibe Generator MVP
 
 **Status:** Not Started
-**Goal:** Launch minimal viable Vibe Generator
+**Goal:** Launch minimal viable Vibe Generator — starting with a foundational audio player, then layering on channels, visuals, and a dedicated route.
 
-### Milestones
+### Milestone 1: Audio Player (Foundational Component)
 
-- [ ] Create AudioPlayer component (TASK-001)
+> Detailed task specs in [AGENT_QUEUE.md](./AGENT_QUEUE.md) — TASK-006 through TASK-012.
+> Supersedes the original TASK-001.
+
+- [ ] Set up audio hosting in S3 + playlist JSON manifest (TASK-006)
+- [ ] Build core AudioPlayer component with playback state (TASK-007)
+- [ ] Build expanded player UI with retro/CRT styling (TASK-008)
+- [ ] Build collapsed/minimized player state (TASK-009)
+- [ ] Mobile responsive design for player (TASK-010)
+- [ ] Integrate player into site layout (TASK-011)
+- [ ] Cross-browser & autoplay testing (TASK-012)
+
+**Audio Player Success Criteria:**
+- Player appears bottom-right on page load, starts muted + playing (graceful fallback if autoplay blocked)
+- Controls: play/pause, next/prev, mute, volume slider, collapse/expand
+- Playlist loaded from JSON in S3 — new tracks added without site redeploy
+- Retro/CRT aesthetic matching existing site design
+- Compact, usable mobile layout
+- Works across Chrome, Safari, Firefox, Edge (desktop + mobile)
+
+### Milestone 2: Channels & Visuals (Future)
+
 - [ ] Create ChannelSelector component (TASK-005)
-- [ ] Add visual backgrounds
-- [ ] Implement volume controls
+- [ ] Add visual backgrounds per channel
 - [ ] Create `/vibe` route
-- [ ] Deploy MVP to production
+- [ ] Deploy MVP to production at robmclaughl.in/vibe
 
 ### Success Criteria
 
@@ -198,7 +217,7 @@ Ideas for future consideration (not scheduled):
 | Phase | Status | Key Deliverable |
 |-------|--------|-----------------|
 | 1. Foundation | In Progress | Clean, documented codebase |
-| 2. Vibe MVP | Not Started | Working music player |
+| 2. Vibe MVP | Not Started | Audio player → channels → /vibe route |
 | 3. AI Integration | Not Started | Generative features |
 | 4. Multi-App | Not Started | Platform infrastructure |
 | 5. Polish | Not Started | Production quality |
@@ -209,8 +228,8 @@ Ideas for future consideration (not scheduled):
 
 - [FEATURE_BACKLOG.md](./FEATURE_BACKLOG.md) - Detailed feature specs
 - [TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md) - Debt to address
-- [AGENT_QUEUE.md](./AGENT_QUEUE.md) - Ready tasks
+- [AGENT_QUEUE.md](./AGENT_QUEUE.md) - Ready tasks with full specs
 
 ---
 
-*Last updated: January 2026*
+*Last updated: March 2026*
