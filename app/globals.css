@@ -151,18 +151,22 @@
   animation: gradient-shift 30s ease infinite;
 }
 
-/* Neon text effect */
+/* Neon text effect — uses filter so it doesn't conflict with text-flicker's text-shadow animation */
 .neon-text {
-  text-shadow: 
-    0 0 5px rgba(255, 0, 255, 0.5), 
-    0 0 10px rgba(255, 0, 255, 0.4), 
-    0 0 15px rgba(255, 0, 255, 0.3),
-    0 0 20px rgba(255, 0, 255, 0.2),
-    0 2px 30px rgba(0, 0, 0, 0.9);
+  filter:
+    drop-shadow(0 0 5px rgba(255, 102, 199, 0.5))
+    drop-shadow(0 0 10px rgba(255, 102, 199, 0.4))
+    drop-shadow(0 0 15px rgba(255, 102, 199, 0.3))
+    drop-shadow(0 0 20px rgba(255, 102, 199, 0.2));
 }
 
 .box-flicker {
   animation: boxShadow 1.6s infinite;
+  will-change: filter;
+}
+
+.box-flicker:hover {
+  animation: none;
 }
 
 @keyframes boxShadow {
@@ -303,12 +307,16 @@
 
 /* Glow effect for hover states */
 .glow-effect:hover {
-  filter: drop-shadow(0 0 8px theme("colors.pink.500"));
+  filter: drop-shadow(0 0 8px rgba(255, 102, 199, 0.8));
 }
 
 /* Icon glow effect */
+.icon-glow {
+  transition: filter 0.3s ease, transform 0.3s ease;
+}
+
 .icon-glow:hover {
-  filter: drop-shadow(0 0 5px theme("colors.pink.500")) drop-shadow(0 0 10px theme("colors.pink.400"));
+  filter: drop-shadow(0 0 5px rgba(255, 102, 199, 0.8)) drop-shadow(0 0 10px rgba(255, 102, 199, 0.5));
   transform: scale(1.05);
 }
 
