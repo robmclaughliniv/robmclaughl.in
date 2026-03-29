@@ -16,7 +16,7 @@ interface HeroBackgroundProps {
 export function HeroBackground({ 
   className, 
   children, 
-  mobileBackgroundImage = '/placeholder.jpg',
+  mobileBackgroundImage = '/placeholder.svg',
   videoSrc = '/videos/bg-sand.mp4',
   videoWebmSrc,
   overlayColor = 'rgba(173,216,230,0.25)',
@@ -30,27 +30,20 @@ export function HeroBackground({
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Handle video loaded
   const handleVideoLoaded = useCallback(() => {
-    console.log('Video data loaded');
     setIsVideoLoaded(true);
     
-    // Force play if in viewport
     if (videoRef.current && isInViewport) {
       setTimeout(() => {
         if (videoRef.current) {
-          videoRef.current.play().catch(err => {
-            console.warn('Delayed video play error:', err);
-          });
+          videoRef.current.play().catch(() => {});
         }
       }, 300);
     }
   }, [isInViewport]);
 
-  // Handle video error
   const handleVideoError = useCallback(() => {
     setHasVideoError(true);
-    console.warn('Video failed to load. Falling back to static image.');
   }, []);
 
   // Set up Intersection Observer to detect when component enters/exits viewport
@@ -90,17 +83,11 @@ export function HeroBackground({
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     
     if (isInViewport && !prefersReducedMotion) {
-      // Force play when video is loaded and in viewport
       if (isVideoLoaded) {
-        console.log('Attempting to play video...');
-        // Use a try/catch because browsers might block play()
         const playPromise = videoRef.current.play();
         
         if (playPromise !== undefined) {
-          playPromise.catch((error) => {
-            console.warn("Error playing video:", error);
-            // Don't set error state as this might be an autoplay policy issue
-          });
+          playPromise.catch(() => {});
         }
       }
     } else {
@@ -110,13 +97,6 @@ export function HeroBackground({
     }
   }, [isInViewport, isVideoLoaded, hasVideoError]);
   
-  // Debug log when video loads
-  useEffect(() => {
-    if (isVideoLoaded) {
-      console.log('Video loaded successfully');
-    }
-  }, [isVideoLoaded]);
-
   // Handle hover effect
   const handleMouseEnter = useCallback(() => {
     setIsHovered(true);

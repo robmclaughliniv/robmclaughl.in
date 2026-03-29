@@ -9,16 +9,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  experimental: {
-    webpackBuildWorker: true,
-    parallelServerBuildTraces: true,
-    parallelServerCompiles: true,
-  },
   poweredByHeader: false,
   output: 'export',
-
-  // Add basePath configuration
-  // Read from environment variable set during CI build
   basePath: process.env.BASE_PATH || '',
 }
 
