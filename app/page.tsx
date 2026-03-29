@@ -1,36 +1,21 @@
-'use client';
-
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Github, Linkedin, Mail, Music, FileText } from "lucide-react"
 import { Waveform } from "@/components/waveform"
 import { HeroBackground } from "@/components/HeroBackground"
-import { useEffect } from "react"
 
 export default function Home() {
-  // Force reflow to ensure animations restart on mount
-  useEffect(() => {
-    const screen = document.querySelector('.crt-screen') as HTMLElement;
-    if (screen) {
-      // Reset animation by briefly removing class
-      screen.classList.remove('crt-screen');
-      void screen.offsetWidth; // Trigger reflow
-      screen.classList.add('crt-screen');
-    }
-  }, []);
-
   return (
     <main className="crt-flicker relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-      {/* Hero Background with CRT effect */}
       <HeroBackground 
         videoSrc="/videos/bg-sand.mp4" 
         mobileBackgroundImage="/placeholder.svg"
         overlayColor="rgba(13, 16, 45, 0.5)"
       >
-        {/* Main content container */}
         <div className="relative z-10 flex flex-col items-center justify-center max-w-2xl mx-auto text-center h-full my-auto drop-shadow-2xl">
-          {/* Decorative elements */}
-          <Waveform className="absolute -bottom-16 -right-16 w-48 h-12 text-pink-500/20 animate-pulse-slow hidden md:block" />
+          <div className="absolute -bottom-16 -right-16 w-48 h-12 animate-pulse-slow hidden md:block">
+            <Waveform className="w-full h-full text-pink-500/20" />
+          </div>
 
           {/* Header section with pixelated font and neon glow */}
           <header className="mb-8">

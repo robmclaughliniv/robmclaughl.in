@@ -24,7 +24,6 @@ export function HeroBackground({
 }: HeroBackgroundProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isInViewport, setIsInViewport] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [hasVideoError, setHasVideoError] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -46,11 +45,12 @@ export function HeroBackground({
     setHasVideoError(true);
   }, []);
 
-  // Set up Intersection Observer to detect when component enters/exits viewport
   useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // Handle visibility for animation and play/pause
         if (entry.isIntersecting) {
           setIsVisible(true);
           setIsInViewport(true);
@@ -58,24 +58,19 @@ export function HeroBackground({
           setIsInViewport(false);
         }
       },
-      {
-        threshold: 0.1, // Trigger when at least 10% of the element is visible
-        rootMargin: '0px' // Consider viewport boundaries
-      }
+      { threshold: 0.1 }
     );
 
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
+    observer.observe(el);
 
-    return () => {
-      if (containerRef.current) {
-        observer.unobserve(containerRef.current);
-      }
-    };
+    // Restart CRT scanline animation on mount
+    el.classList.remove('crt-screen');
+    void el.offsetWidth;
+    el.classList.add('crt-screen');
+
+    return () => observer.unobserve(el);
   }, []);
 
-  // Play/pause video based on viewport visibility and reduced motion preference
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!videoRef.current || hasVideoError) return;
@@ -85,77 +80,26 @@ export function HeroBackground({
     if (isInViewport && !prefersReducedMotion) {
       if (isVideoLoaded) {
         const playPromise = videoRef.current.play();
-        
         if (playPromise !== undefined) {
           playPromise.catch(() => {});
         }
       }
-    } else {
-      if (videoRef.current && !videoRef.current.paused) {
-        videoRef.current.pause();
-      }
+    } else if (videoRef.current && !videoRef.current.paused) {
+      videoRef.current.pause();
     }
   }, [isInViewport, isVideoLoaded, hasVideoError]);
-  
-  // Handle hover effect
+
   const handleMouseEnter = useCallback(() => {
-    setIsHovered(true);
-  }, []);
+    if (videoRef.current && !disableEffects) {
+      videoRef.current.style.filter = 'brightness(1.1) contrast(1.05)';
+    }
+  }, [disableEffects]);
 
   const handleMouseLeave = useCallback(() => {
-    setIsHovered(false);
-  }, []);
-
-  // Apply filter transition on video element when hovered
-  useEffect(() => {
     if (videoRef.current && !disableEffects) {
-      if (isHovered) {
-        videoRef.current.style.filter = 'brightness(1.1) contrast(1.05)';
-      } else {
-        videoRef.current.style.filter = 'brightness(1) contrast(1)';
-      }
+      videoRef.current.style.filter = 'brightness(1) contrast(1)';
     }
-  }, [isHovered, disableEffects]);
-
-  // Main background - render different elements based on state
-  const renderBackground = () => {
-    // Always render mobile background
-    return (
-      <>
-        {/* Mobile background image or video fallback */}
-        <div 
-          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat md:hidden" 
-          style={{ 
-            backgroundImage: `url(${mobileBackgroundImage})`,
-            display: hasVideoError ? 'block' : undefined
-          }}
-          role="img"
-          aria-label="Background image"
-        />
-        
-        {/* Video background (hidden on mobile or if error) */}
-        {!hasVideoError && (
-          <video
-            ref={videoRef}
-            className="absolute inset-0 w-full h-full object-cover hidden md:block transition-[filter] duration-700 ease-in-out"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            onLoadedData={handleVideoLoaded}
-            onError={handleVideoError}
-            aria-hidden="true"
-          >
-            {videoWebmSrc && <source src={videoWebmSrc} type="video/webm" />}
-            <source src={videoSrc} type="video/mp4" />
-            {/* Fallback message only shown if browser doesn't support video */}
-            Your browser does not support the video tag.
-          </video>
-        )}
-      </>
-    );
-  };
+  }, [disableEffects]);
 
   return (
     <div 
@@ -166,12 +110,37 @@ export function HeroBackground({
       data-testid="hero-background"
       role="presentation"
     >
-      {renderBackground()}
-      
-      {/* Skip effects if disabled */}
+      <div 
+        className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat md:hidden" 
+        style={{ 
+          backgroundImage: `url(${mobileBackgroundImage})`,
+          display: hasVideoError ? 'block' : undefined
+        }}
+        role="img"
+        aria-label="Background image"
+      />
+
+      {!hasVideoError && (
+        <video
+          ref={videoRef}
+          className="absolute inset-0 w-full h-full object-cover hidden md:block transition-[filter] duration-700 ease-in-out"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          onLoadedData={handleVideoLoaded}
+          onError={handleVideoError}
+          aria-hidden="true"
+        >
+          {videoWebmSrc && <source src={videoWebmSrc} type="video/webm" />}
+          <source src={videoSrc} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      )}
+
       {!disableEffects && (
         <>
-          {/* Light blue overlay */}
           <div 
             className={cn(
               "absolute inset-0 z-[1] transition-opacity duration-1000 ease-in-out",
@@ -180,7 +149,6 @@ export function HeroBackground({
             style={{ backgroundColor: overlayColor }}
           />
           
-          {/* Noise texture overlay */}
           <div 
             className={cn(
               "absolute inset-0 z-[2] opacity-0 transition-opacity duration-1500 ease-in-out",
@@ -194,7 +162,6 @@ export function HeroBackground({
             aria-hidden="true"
           />
           
-          {/* CRT vignette effect */}
           <div 
             className={cn(
               "absolute inset-0 z-[3] pointer-events-none",
@@ -209,7 +176,6 @@ export function HeroBackground({
         </>
       )}
       
-      {/* Content container - higher z-index than scanlines */}
       <div className={cn("relative z-50 w-full h-full flex items-center justify-center", className)}>
         {children}
       </div>
