@@ -1,33 +1,60 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Inter, Space_Mono, Press_Start_2P } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 
-// Load Inter as the body font
 const inter = Inter({
   subsets: ["latin"],
+  display: "swap",
   variable: "--font-inter",
 })
 
-// Load Space Mono for secondary headings
 const spaceMono = Space_Mono({
   weight: ["400", "700"],
   subsets: ["latin"],
+  display: "swap",
   variable: "--font-space-mono",
 })
 
-// Load Press Start 2P for the main heading - pixelated retro font
 const pressStart2P = Press_Start_2P({
   weight: ["400"],
   subsets: ["latin"],
+  display: "swap",
   variable: "--font-press-start-2p",
 })
 
+const siteUrl = "https://robmclaughl.in"
+
 export const metadata: Metadata = {
-  title: "Rob McLaughlin | Engineering Manager",
-  description: "Personal website of Rob McLaughlin, Engineering Manager",
-  generator: 'v0.dev'
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Rob McLaughlin | Engineering Manager",
+    template: "%s | Rob McLaughlin",
+  },
+  description:
+    "Personal website of Rob McLaughlin — Engineering Manager, problem-solver, and dad based in Austin, TX.",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: siteUrl,
+    siteName: "Rob McLaughlin",
+    title: "Rob McLaughlin | Engineering Manager",
+    description:
+      "Personal website of Rob McLaughlin — Engineering Manager, problem-solver, and dad based in Austin, TX.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Rob McLaughlin | Engineering Manager",
+    description:
+      "Personal website of Rob McLaughlin — Engineering Manager, problem-solver, and dad based in Austin, TX.",
+  },
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#09090b",
 }
 
 export default function RootLayout({
@@ -36,10 +63,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} ${spaceMono.variable} ${pressStart2P.variable} font-sans bg-zinc-950 text-zinc-100 antialiased`}
-      >
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${spaceMono.variable} ${pressStart2P.variable}`}
+    >
+      <body className="font-sans bg-zinc-950 text-zinc-100 antialiased">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           {children}
         </ThemeProvider>

@@ -24,7 +24,7 @@ export default function Home() {
       {/* Hero Background with CRT effect */}
       <HeroBackground 
         videoSrc="/videos/bg-sand.mp4" 
-        mobileBackgroundImage="/placeholder.jpg"
+        mobileBackgroundImage="/placeholder.svg"
         overlayColor="rgba(13, 16, 45, 0.5)"
       >
         {/* Main content container */}
