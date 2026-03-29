@@ -68,7 +68,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${spaceMono.variable} ${pressStart2P.variable}`}
     >
-      <body className="font-sans bg-zinc-950 text-zinc-100 antialiased">
+      <body className="font-sans bg-background text-foreground antialiased">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           {children}
         </ThemeProvider>
