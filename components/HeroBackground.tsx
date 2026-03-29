@@ -10,7 +10,6 @@ interface HeroBackgroundProps {
   videoSrc?: string;
   videoWebmSrc?: string;
   overlayColor?: string;
-  disableEffects?: boolean;
 }
 
 export function HeroBackground({ 
@@ -20,7 +19,6 @@ export function HeroBackground({
   videoSrc = '/videos/bg-sand.mp4',
   videoWebmSrc,
   overlayColor = 'rgba(173,216,230,0.25)',
-  disableEffects = false
 }: HeroBackgroundProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isInViewport, setIsInViewport] = useState(false);
@@ -90,16 +88,16 @@ export function HeroBackground({
   }, [isInViewport, isVideoLoaded, hasVideoError]);
 
   const handleMouseEnter = useCallback(() => {
-    if (videoRef.current && !disableEffects) {
+    if (videoRef.current) {
       videoRef.current.style.filter = 'brightness(1.1) contrast(1.05)';
     }
-  }, [disableEffects]);
+  }, []);
 
   const handleMouseLeave = useCallback(() => {
-    if (videoRef.current && !disableEffects) {
+    if (videoRef.current) {
       videoRef.current.style.filter = 'brightness(1) contrast(1)';
     }
-  }, [disableEffects]);
+  }, []);
 
   return (
     <div 
@@ -139,42 +137,38 @@ export function HeroBackground({
         </video>
       )}
 
-      {!disableEffects && (
-        <>
-          <div 
-            className={cn(
-              "absolute inset-0 z-[1] transition-opacity duration-1000 ease-in-out",
-              isVisible ? "opacity-100" : "opacity-0"
-            )}
-            style={{ backgroundColor: overlayColor }}
-          />
-          
-          <div 
-            className={cn(
-              "absolute inset-0 z-[2] opacity-0 transition-opacity duration-1500 ease-in-out",
-              isVisible ? "opacity-10" : "opacity-0"
-            )}
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'repeat',
-              transitionDelay: '200ms',
-            }}
-            aria-hidden="true"
-          />
-          
-          <div 
-            className={cn(
-              "absolute inset-0 z-[3] pointer-events-none",
-              isVisible ? "opacity-100" : "opacity-0"
-            )}
-            style={{
-              boxShadow: "0 0 150px rgba(0, 0, 0, .01) inset",
-              transitionDelay: '400ms',
-            }}
-            aria-hidden="true"
-          />
-        </>
-      )}
+      <div 
+        className={cn(
+          "absolute inset-0 z-[1] transition-opacity duration-1000 ease-in-out",
+          isVisible ? "opacity-100" : "opacity-0"
+        )}
+        style={{ backgroundColor: overlayColor }}
+      />
+      
+      <div 
+        className={cn(
+          "absolute inset-0 z-[2] opacity-0 transition-opacity duration-1500 ease-in-out",
+          isVisible ? "opacity-10" : "opacity-0"
+        )}
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          backgroundRepeat: 'repeat',
+          transitionDelay: '200ms',
+        }}
+        aria-hidden="true"
+      />
+      
+      <div 
+        className={cn(
+          "absolute inset-0 z-[3] pointer-events-none",
+          isVisible ? "opacity-100" : "opacity-0"
+        )}
+        style={{
+          boxShadow: "0 0 150px rgba(0, 0, 0, .01) inset",
+          transitionDelay: '400ms',
+        }}
+        aria-hidden="true"
+      />
       
       <div className={cn("relative z-50 w-full h-full flex items-center justify-center", className)}>
         {children}
