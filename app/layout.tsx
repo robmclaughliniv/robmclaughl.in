@@ -66,9 +66,16 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${spaceMono.variable} ${pressStart2P.variable}`}
+      className={`${inter.variable} ${spaceMono.variable} ${pressStart2P.variable} dark`}
+      style={{ colorScheme: "dark" }}
     >
       <body className="font-sans bg-background text-foreground antialiased">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-md focus:bg-background focus:text-foreground focus:ring-2 focus:ring-ring focus:outline-none font-mono text-sm"
+        >
+          Skip to content
+        </a>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           {children}
         </ThemeProvider>
