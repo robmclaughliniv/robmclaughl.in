@@ -19,7 +19,7 @@ export default function Home() {
 
           {/* Header section with pixelated font and neon glow */}
           <header className="mb-8">
-            <h1 className="text-flicker text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-pixel tracking-tight mb-4 text-white neon-text leading-normal drop-shadow-[0_0_15px_rgba(236,72,153,0.5)]">
+            <h1 className="text-flicker text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-pixel tracking-tight mb-4 text-white neon-text leading-normal">
               Rob McLaughlin
             </h1>
             <div className="flex items-center justify-center gap-2 text-muted-foreground">
@@ -39,7 +39,7 @@ export default function Home() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-colors duration-300 icon-glow shadow-lg"
+                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-[color,background-color] duration-300 icon-glow shadow-lg"
                       aria-label="GitHub"
                       asChild
                     >
@@ -61,7 +61,7 @@ export default function Home() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-colors duration-300 icon-glow shadow-lg"
+                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-[color,background-color] duration-300 icon-glow shadow-lg"
                       aria-label="LinkedIn"
                       asChild
                     >
@@ -83,7 +83,7 @@ export default function Home() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-colors duration-300 icon-glow shadow-lg"
+                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-[color,background-color] duration-300 icon-glow shadow-lg"
                       aria-label="Email"
                       asChild
                     >
@@ -105,7 +105,7 @@ export default function Home() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-colors duration-300 icon-glow shadow-lg"
+                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-[color,background-color] duration-300 icon-glow shadow-lg"
                       aria-label="Resume"
                       asChild
                     >
@@ -124,7 +124,7 @@ export default function Home() {
           </TooltipProvider>
 
           {/* Bio section */}
-          <div className="box-flicker bg-card/50 backdrop-blur-sm p-6 rounded-lg border border-border mb-12 max-w-md shadow-xl drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)]">
+          <div className="box-flicker bg-card/50 backdrop-blur-sm p-6 rounded-lg border border-border mb-12 max-w-md shadow-xl">
             <p className="text-muted-foreground leading-relaxed font-medium">
               Engineer, problem-solver, and dad.<br />Based in Austin, TX.
             </p>
