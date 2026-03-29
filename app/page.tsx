@@ -13,21 +13,20 @@ export default function Home() {
         overlayColor="rgba(13, 16, 45, 0.5)"
       >
         <div className="relative z-10 flex flex-col items-center justify-center max-w-2xl mx-auto text-center h-full my-auto drop-shadow-2xl">
-          <div className="absolute -bottom-16 -right-16 w-48 h-12 animate-pulse-slow hidden md:block">
-            <Waveform className="w-full h-full text-pink-500/20" />
-          </div>
+          {/* Decorative elements */}
+          <Waveform className="absolute -bottom-16 -right-16 w-48 h-12 text-accent/20 animate-pulse-slow hidden md:block" />
 
           {/* Header section with pixelated font and neon glow */}
           <header className="mb-8">
             <h1 className="text-flicker text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-pixel tracking-tight mb-4 text-white neon-text leading-normal drop-shadow-[0_0_15px_rgba(236,72,153,0.5)]">
               Rob McLaughlin
             </h1>
-            <div className="flex items-center justify-center gap-2 text-zinc-400">
-              <Music className="w-4 h-4 text-pink-500" />
+            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+              <Music className="size-4 text-accent" />
               <p className="text-flicker text-lg md:text-xl font-mono drop-shadow-lg">Engineering Manager</p>
-              <Music className="w-4 h-4 text-pink-500" />
+              <Music className="size-4 text-accent" />
             </div>
-            <div className="mt-4 w-24 h-1 bg-gradient-to-r from-transparent via-pink-500 to-transparent mx-auto drop-shadow-xl"></div>
+            <div className="mt-4 w-24 h-1 bg-gradient-to-r from-transparent via-accent to-transparent mx-auto drop-shadow-xl"></div>
           </header>
 
           {/* Social links section with larger icons and enhanced hover effects */}
@@ -39,12 +38,12 @@ export default function Home() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="box-flicker w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
+                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-all duration-300 icon-glow shadow-lg"
                       aria-label="GitHub"
                       asChild
                     >
                       <a href="https://github.com/robmclaughliniv" target="_blank" rel="noopener noreferrer">
-                        <Github className="w-7 h-7" />
+                        <Github className="size-7" />
                       </a>
                     </Button>
                   </TooltipTrigger>
@@ -52,7 +51,7 @@ export default function Home() {
                     <p>GitHub</p>
                   </TooltipContent>
                 </Tooltip>
-                <span className="text-xs font-mono text-zinc-500">GitHub</span>
+                <span className="text-xs font-mono text-muted-foreground">GitHub</span>
               </div>
 
               <div className="flex flex-col items-center gap-2">
@@ -61,12 +60,12 @@ export default function Home() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="box-flicker w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
+                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-all duration-300 icon-glow shadow-lg"
                       aria-label="LinkedIn"
                       asChild
                     >
                       <a href="https://linkedin.com/in/robertmclaughliniv" target="_blank" rel="noopener noreferrer">
-                        <Linkedin className="w-7 h-7" />
+                        <Linkedin className="size-7" />
                       </a>
                     </Button>
                   </TooltipTrigger>
@@ -74,7 +73,7 @@ export default function Home() {
                     <p>LinkedIn</p>
                   </TooltipContent>
                 </Tooltip>
-                <span className="text-xs font-mono text-zinc-500">LinkedIn</span>
+                <span className="text-xs font-mono text-muted-foreground">LinkedIn</span>
               </div>
 
               <div className="flex flex-col items-center gap-2">
@@ -83,12 +82,12 @@ export default function Home() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="box-flicker w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
+                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-all duration-300 icon-glow shadow-lg"
                       aria-label="Email"
                       asChild
                     >
                       <a href="mailto:robmclaughliniv@gmail.com">
-                        <Mail className="w-7 h-7" />
+                        <Mail className="size-7" />
                       </a>
                     </Button>
                   </TooltipTrigger>
@@ -96,7 +95,7 @@ export default function Home() {
                     <p>Email</p>
                   </TooltipContent>
                 </Tooltip>
-                <span className="text-xs font-mono text-zinc-500">Email</span>
+                <span className="text-xs font-mono text-muted-foreground">Email</span>
               </div>
 
               <div className="flex flex-col items-center gap-2">
@@ -105,12 +104,12 @@ export default function Home() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="box-flicker w-14 h-14 rounded-full bg-zinc-800/50 text-zinc-300 hover:text-pink-500 hover:bg-zinc-800 transition-all duration-300 icon-glow shadow-lg"
+                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-all duration-300 icon-glow shadow-lg"
                       aria-label="Resume"
                       asChild
                     >
                       <a href="/pdf/resume.pdf" target="_blank" rel="noopener noreferrer">
-                        <FileText className="w-7 h-7" />
+                        <FileText className="size-7" />
                       </a>
                     </Button>
                   </TooltipTrigger>
@@ -118,20 +117,20 @@ export default function Home() {
                     <p>Resume</p>
                   </TooltipContent>
                 </Tooltip>
-                <span className="text-xs font-mono text-zinc-500">Resume</span>
+                <span className="text-xs font-mono text-muted-foreground">Resume</span>
               </div>
             </nav>
           </TooltipProvider>
 
           {/* Bio section */}
-          <div className="box-flicker bg-zinc-900/50 backdrop-blur-sm p-6 rounded-lg border border-zinc-800 mb-12 max-w-md shadow-xl drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)]">
-            <p className="text-zinc-300 leading-relaxed font-medium">
+          <div className="box-flicker bg-card/50 backdrop-blur-sm p-6 rounded-lg border border-border mb-12 max-w-md shadow-xl drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)]">
+            <p className="text-muted-foreground leading-relaxed font-medium">
               Engineer, problem-solver, and dad.<br />Based in Austin, TX.
             </p>
           </div>
 
           {/* Footer */}
-          <footer className="text-flicker text-zinc-500 text-sm font-mono mt-12">
+          <footer className="text-flicker text-muted-foreground text-sm font-mono mt-12">
             <p>© {new Date().getFullYear()} Rob McLaughlin</p>
           </footer>
         </div>
