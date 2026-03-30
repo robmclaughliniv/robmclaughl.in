@@ -1,14 +1,9 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { Inter, Space_Mono, Press_Start_2P } from "next/font/google"
-import dynamic from "next/dynamic"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-
-const AudioPlayer = dynamic(
-  () => import("@/components/audio-player").then((mod) => ({ default: mod.AudioPlayer })),
-  { ssr: false }
-)
+import { AudioPlayerLoader } from "@/components/audio-player"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -84,7 +79,7 @@ export default function RootLayout({
         </a>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           {children}
-          <AudioPlayer />
+          <AudioPlayerLoader />
         </ThemeProvider>
       </body>
     </html>
