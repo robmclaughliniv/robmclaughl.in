@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next"
 import { Inter, Space_Mono, Press_Start_2P } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { AudioPlayerLoader } from "@/components/audio-player"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -78,6 +79,7 @@ export default function RootLayout({
         </a>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           {children}
+          <AudioPlayerLoader />
         </ThemeProvider>
       </body>
     </html>

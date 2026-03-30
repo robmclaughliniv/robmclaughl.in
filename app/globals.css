@@ -320,6 +320,36 @@
   transform: scale(1.05);
 }
 
+/* Audio player button glow */
+.player-btn {
+  transition: color 0.2s ease, filter 0.2s ease;
+}
+
+.player-btn:hover {
+  filter: drop-shadow(0 0 4px rgba(255, 102, 199, 0.6));
+}
+
+/* Audio player slider — neon accent track and thumb */
+.player-slider [data-orientation="horizontal"] > span:first-child {
+  background-color: hsl(var(--muted));
+}
+
+.player-slider [data-orientation="horizontal"] > span:first-child > span {
+  background-color: hsl(var(--accent));
+}
+
+.player-slider span[role="slider"] {
+  height: 14px;
+  width: 14px;
+  border-color: hsl(var(--accent));
+  transition: box-shadow 0.2s ease;
+}
+
+.player-slider span[role="slider"]:hover,
+.player-slider span[role="slider"]:focus-visible {
+  box-shadow: 0 0 6px rgba(255, 102, 199, 0.7);
+}
+
 /* Eliminate 300ms tap delay on mobile */
 @layer base {
   html {

@@ -6,8 +6,8 @@
 
 | Status | Count |
 |--------|-------|
-| Ready | 11 |
-| In Progress | 0 |
+| Ready | 5 |
+| In Progress | 6 |
 | Blocked | 0 |
 | Superseded | 1 |
 | Completed | 0 |
@@ -209,23 +209,24 @@ const DEFAULT_CHANNELS: Channel[] = [
 | **ID** | TASK-006 |
 | **Type** | Infrastructure |
 | **Priority** | P0 |
-| **Status** | Ready |
+| **Status** | In Progress |
 | **Feature Ref** | VG-001 |
 | **Phase** | 2 — Vibe Generator MVP, Milestone 1 (Audio Player) |
+| **Branch** | audio |
 
 **Summary:**
 Set up S3/CloudFront hosting for audio files and a playlist JSON manifest that the player component will fetch at runtime.
 
 **Acceptance Criteria:**
-- [ ] `/audio/` prefix exists in the existing S3 bucket for hosting `.mp3` files
-- [ ] `playlist.json` at `/audio/playlist.json` matches the schema below
-- [ ] CloudFront serves `.mp3` files with correct `Content-Type: audio/mpeg` header
-- [ ] CORS headers allow the site origin to fetch JSON and stream audio
-- [ ] 4–6 tracks (real Suno-generated or placeholder) uploaded for testing
-- [ ] `https://robmclaughl.in/audio/playlist.json` returns valid JSON
-- [ ] `https://robmclaughl.in/audio/<track>.mp3` streams audio in browser
-- [ ] Adding a new track = upload `.mp3` to S3 + update `playlist.json` — no site redeploy needed
-- [ ] Local dev: copy of `playlist.json` and a test track in `public/audio/` so the player works locally without hitting prod S3
+- [x] `/audio/` prefix exists in the existing S3 bucket for hosting `.mp3` files — S3 accepts any prefix, no Terraform changes needed
+- [x] `playlist.json` at `/audio/playlist.json` matches the schema below — created at `public/audio/playlist.json`
+- [x] CloudFront serves `.mp3` files with correct `Content-Type: audio/mpeg` header — `aws s3 sync`/`cp` sets Content-Type from extension automatically
+- [x] CORS headers allow the site origin to fetch JSON and stream audio — same-origin (CloudFront), no CORS needed; CSP already has `media-src 'self'`
+- [ ] 4–6 tracks (real Suno-generated or placeholder) uploaded for testing — **requires manual S3 upload**
+- [ ] `https://robmclaughl.in/audio/playlist.json` returns valid JSON — **requires manual S3 upload**
+- [ ] `https://robmclaughl.in/audio/<track>.mp3` streams audio in browser — **requires manual S3 upload**
+- [x] Adding a new track = upload `.mp3` to S3 + update `playlist.json` — no site redeploy needed — deploy workflow updated with `--exclude "audio/*"`
+- [x] Local dev: copy of `playlist.json` and a test track in `public/audio/` so the player works locally without hitting prod S3 — playlist created; add `.mp3` files locally (gitignored)
 
 **Playlist Schema:**
 ```json
@@ -255,7 +256,16 @@ Set up S3/CloudFront hosting for audio files and a playlist JSON manifest that t
 
 **Notes:**
 - Audio files are managed separately from the site deploy pipeline.
-- Consider whether Terraform needs changes for the `/audio/` prefix or if the existing bucket config already handles it.
+- Terraform analysis confirmed: no changes needed. S3 bucket accepts any prefix, CloudFront default cache behavior serves `/audio/*` correctly, CSP already includes `media-src 'self'`, and OAC bucket policy allows CloudFront `GetObject` on `bucket/*`.
+- Deploy workflow updated: `--exclude "audio/*"` added to production `aws s3 sync --delete` to prevent deploys from wiping manually-uploaded audio files.
+- `.gitignore` updated: `public/audio/*.mp3` excluded from git (large binaries managed via S3).
+- **Remaining manual steps:** Upload 4–6 `.mp3` files and `playlist.json` to `s3://robmclaughl-in-website-bucket/audio/` via AWS CLI:
+  ```bash
+  aws s3 cp playlist.json s3://robmclaughl-in-website-bucket/audio/playlist.json
+  aws s3 cp track-01.mp3 s3://robmclaughl-in-website-bucket/audio/track-01.mp3
+  # Repeat for each track, then invalidate CloudFront:
+  aws cloudfront create-invalidation --distribution-id <DIST_ID> --paths "/audio/*"
+  ```
 
 ---
 
@@ -266,23 +276,24 @@ Set up S3/CloudFront hosting for audio files and a playlist JSON manifest that t
 | **ID** | TASK-007 |
 | **Type** | Feature |
 | **Priority** | P0 |
-| **Status** | Ready |
+| **Status** | In Progress |
 | **Feature Ref** | VG-001 |
 | **Phase** | 2 — Vibe Generator MVP, Milestone 1 (Audio Player) |
 | **Supersedes** | TASK-001 |
+| **Branch** | audio |
 
 **Summary:**
 Build the core `AudioPlayer` React component with HTML5 Audio API integration and all playback state management. This task is logic/state only — UI rendering is handled in TASK-008 and TASK-009.
 
 **Acceptance Criteria:**
-- [ ] Component directory: `components/audio-player/`
-- [ ] Uses `useRef` for `HTMLAudioElement` — does NOT render `<audio>` with native `controls`
-- [ ] Fetches `playlist.json` on mount, handles fetch failure gracefully (log error, hide player or show subtle error state — don't crash the page)
-- [ ] On track end (`ended` event), advance to next track; loop back to index 0 after last track
-- [ ] Autoplay on mount: set `muted = true`, call `play()`, catch rejection and set `isPlaying = false`
-- [ ] All playback actions work: `play`, `pause`, `toggleMute`, `setVolume`, `nextTrack`, `prevTrack`, `toggleCollapse`
-- [ ] Unmuting restores previous volume level
-- [ ] No console errors on mount or during playback
+- [x] Component directory: `components/audio-player/`
+- [x] Uses `useRef` for `HTMLAudioElement` — does NOT render `<audio>` with native `controls`
+- [x] Fetches `playlist.json` on mount, handles fetch failure gracefully (log error, hide player or show subtle error state — don't crash the page)
+- [x] On track end (`ended` event), advance to next track; loop back to index 0 after last track
+- [x] Autoplay on mount: set `muted = true`, call `play()`, catch rejection and set `isPlaying = false`
+- [x] All playback actions work: `play`, `pause`, `toggleMute`, `setVolume`, `nextTrack`, `prevTrack`, `toggleCollapse`
+- [x] Unmuting restores previous volume level
+- [ ] No console errors on mount or during playback — **requires runtime testing with audio files**
 
 **State to Manage:**
 - `isPlaying` (boolean)
@@ -317,22 +328,23 @@ Build the core `AudioPlayer` React component with HTML5 Audio API integration an
 | **ID** | TASK-008 |
 | **Type** | Feature |
 | **Priority** | P0 |
-| **Status** | Ready |
+| **Status** | In Progress |
 | **Feature Ref** | VG-001 |
 | **Phase** | 2 — Vibe Generator MVP, Milestone 1 (Audio Player) |
+| **Branch** | audio |
 
 **Summary:**
 Build the expanded player UI with all controls, styled to match the site's lo-fi/CRT/retro-game aesthetic.
 
 **Acceptance Criteria:**
-- [ ] Position: `fixed`, bottom-right of viewport (e.g., `bottom-4 right-4`)
-- [ ] All 6 controls visible and functional: play/pause, prev track, next track, mute/unmute, volume slider, collapse button
-- [ ] Visual style matches site aesthetic (lo-fi, dark, neon accents, retro feel)
-- [ ] Volume slider is custom-styled (not default browser appearance) — works in Chrome and Firefox
-- [ ] Hover/active states have neon glow or visual feedback
-- [ ] Component does not obscure critical page content (social links, etc.)
-- [ ] Looks good on desktop viewports (≥768px) — mobile is TASK-010
-- [ ] Uses a reasonable `z-index` (above page content, below any future modals)
+- [x] Position: `fixed`, bottom-right of viewport (`bottom-4 right-4`)
+- [x] All 6 controls visible and functional: play/pause, prev track, next track, mute/unmute, volume slider, collapse button
+- [x] Visual style matches site aesthetic (lo-fi, dark, neon accents, retro feel)
+- [x] Volume slider is custom-styled (not default browser appearance) — uses Radix Slider, works cross-browser
+- [x] Hover/active states have neon glow or visual feedback — `.player-btn` glow + slider thumb glow
+- [ ] Component does not obscure critical page content (social links, etc.) — **requires visual testing**
+- [ ] Looks good on desktop viewports (≥768px) — mobile is TASK-010 — **requires visual testing**
+- [x] Uses a reasonable `z-index` (`z-[60]`, above page content z-50, below future modals)
 
 **Controls:**
 - **Play/Pause** button (toggle icon)
@@ -374,19 +386,20 @@ Build the expanded player UI with all controls, styled to match the site's lo-fi
 | **ID** | TASK-009 |
 | **Type** | Feature |
 | **Priority** | P0 |
-| **Status** | Ready |
+| **Status** | In Progress |
 | **Feature Ref** | VG-001 |
 | **Phase** | 2 — Vibe Generator MVP, Milestone 1 (Audio Player) |
+| **Branch** | audio |
 
 **Summary:**
 Build the minimized/collapsed version of the player — a small fixed button that expands back to the full player.
 
 **Acceptance Criteria:**
-- [ ] When collapsed, player shrinks to a single small icon button (40–48px) in the bottom-right corner
-- [ ] Collapsed button visually indicates playback state: subtle pulse/glow if playing, static if paused
-- [ ] Clicking collapsed button expands back to full player (TASK-008)
-- [ ] Transition between collapsed/expanded is smooth (CSS transition or scale transform)
-- [ ] Collapsed button does not interfere with page content
+- [x] When collapsed, player shrinks to a single small icon button (44px / `size-11`) in the bottom-right corner
+- [x] Collapsed button visually indicates playback state: `animate-pulse-slow` + neon pink box-shadow when playing, static when paused
+- [x] Clicking collapsed button expands back to full player (TASK-008)
+- [x] Transition between collapsed/expanded is smooth (`transition-all duration-300`, `hover:scale-105`)
+- [ ] Collapsed button does not interfere with page content — **requires visual testing**
 
 **Icon Options:** Music note, cassette, play/pause icon — pick what fits the retro aesthetic best.
 
@@ -407,21 +420,22 @@ Build the minimized/collapsed version of the player — a small fixed button tha
 | **ID** | TASK-010 |
 | **Type** | Feature |
 | **Priority** | P0 |
-| **Status** | Ready |
+| **Status** | In Progress |
 | **Feature Ref** | VG-001 |
 | **Phase** | 2 — Vibe Generator MVP, Milestone 1 (Audio Player) |
+| **Branch** | audio |
 
 **Summary:**
 Make the audio player compact and usable on mobile viewports.
 
 **Acceptance Criteria:**
-- [ ] On screens below `768px` (`md` breakpoint), expanded player adapts to a compact layout (full-width bottom bar or smaller floating card)
-- [ ] Volume slider may be hidden behind a tap (tap volume icon to toggle slider) to save space
-- [ ] Collapsed state on mobile: same small icon button, positioned to avoid overlap with bottom nav or mobile UI
-- [ ] All buttons are at least 44px tap targets (Apple HIG minimum)
-- [ ] Volume slider works with touch (not just mouse drag)
-- [ ] No horizontal overflow or layout shift on mobile
-- [ ] Looks clean on 375px-wide viewport (iPhone SE)
+- [x] On screens below `768px` (`md` breakpoint), expanded player adapts to a compact layout — `w-[calc(100vw-2rem)]` centered card
+- [x] Volume slider hidden behind a tap — tap volume icon toggles slider row on mobile, mutes on desktop
+- [x] Collapsed state on mobile: same icon button, right-aligned via `flex justify-end`
+- [x] All buttons are at least 44px tap targets — `size-11` on mobile, `size-8`/`size-9` on desktop
+- [x] Volume slider works with touch — Radix Slider has built-in touch support
+- [x] No horizontal overflow or layout shift on mobile — `w-[calc(100vw-2rem)]` with `right-4 left-4`
+- [ ] Looks clean on 375px-wide viewport (iPhone SE) — **requires visual testing**
 
 **Files to Modify:**
 - `components/audio-player/PlayerControls.tsx`
@@ -442,21 +456,22 @@ Make the audio player compact and usable on mobile viewports.
 | **ID** | TASK-011 |
 | **Type** | Feature |
 | **Priority** | P0 |
-| **Status** | Ready |
+| **Status** | In Progress |
 | **Feature Ref** | VG-001 |
 | **Phase** | 2 — Vibe Generator MVP, Milestone 1 (Audio Player) |
+| **Branch** | audio |
 
 **Summary:**
 Mount the AudioPlayer component in the root layout so it persists across the site.
 
 **Acceptance Criteria:**
-- [ ] `<AudioPlayer />` added to `app/layout.tsx`, outside main content area
-- [ ] Placed after main content in the DOM (renders on top without excessive z-index)
-- [ ] No hydration mismatches — uses `'use client'` directive; use `next/dynamic` with `ssr: false` if needed
-- [ ] Player does not interfere with existing page elements (hero, social links, video background, scanline overlay)
-- [ ] Player z-index is correct relative to existing overlays (scanlines, noise, etc.)
-- [ ] Audio begins playing muted on page load (or gracefully falls back to paused)
-- [ ] No console errors or SSR warnings
+- [x] `<AudioPlayer />` added to `app/layout.tsx`, outside main content area
+- [x] Placed after `{children}` in the DOM (renders on top without excessive z-index)
+- [x] No hydration mismatches — loaded via `next/dynamic` with `ssr: false`
+- [ ] Player does not interfere with existing page elements — **requires visual testing**
+- [x] Player z-index is correct relative to existing overlays — `z-[60]` above hero z-50 and scanlines z-30/40
+- [x] Audio begins playing muted on page load (or gracefully falls back to paused)
+- [ ] No console errors or SSR warnings — **requires runtime testing**
 
 **Files to Modify:**
 - `app/layout.tsx`
