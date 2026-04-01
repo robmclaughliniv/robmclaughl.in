@@ -91,14 +91,38 @@ Example usage in page.tsx:
 - ✅ Scoped social button transitions to `transition-[color,background-color]` to prevent filter/transform interference
 - ✅ Removed redundant `drop-shadow` utilities from the heading and bio section
 
+### Audio Player — Vibe Generator MVP (March 29, 2026)
+- ✅ **TASK-006:** Audio infrastructure — `public/audio/playlist.json` created with 7 tracks, `.mp3` files in `public/audio/`
+- ✅ **TASK-007:** Core `useAudioPlayer` hook — HTML5 Audio API via `useRef`, playlist fetch, autoplay muted, track advancement, play/pause/mute/volume/next/prev/collapse actions
+- ✅ **TASK-008:** Expanded player UI — `PlayerControls` component with 6 controls (play/pause, prev, next, mute, volume slider, collapse), retro neon glow styling, shadcn Button/Slider
+- ✅ **TASK-009:** Collapsed player UI — `CollapsedPlayer` music note button with pulse glow when playing
+- ✅ **TASK-010:** Mobile responsive — 44px tap targets, volume slider toggled behind tap on mobile, full-width bottom bar on small screens
+- ✅ **TASK-011:** Integration — `AudioPlayerLoader` client wrapper with `next/dynamic` `ssr: false`, mounted in `app/layout.tsx`
+
+#### Audio Player Architecture
+```
+app/layout.tsx
+  └─ AudioPlayerLoader (client boundary, dynamic import, ssr: false)
+       └─ AudioPlayer (state via useAudioPlayer hook)
+            ├─ PlayerControls (expanded UI)
+            └─ CollapsedPlayer (minimized icon button)
+
+hooks/use-audio-player.ts — all state + Audio API logic
+public/audio/playlist.json — track manifest
+public/audio/*.mp3 — 7 lo-fi tracks
+```
+
 ## In Progress
 - Content refinement
 - Performance testing
 - Additional UI/UX enhancements
-- Baseline UI testing implementation (Cypress)
+- Cross-browser & autoplay testing (TASK-012)
+- Visual testing of audio player (positioning, content obstruction, mobile layout)
 
 ## Next Steps
-- Implement baseline UI tests using Cypress
+- TASK-012: Cross-browser & autoplay testing across Chrome, Safari, Firefox, Edge
+- TASK-003: Fix ESLint/TypeScript errors, remove `ignoreDuringBuilds` flags
+- TASK-004: Remove duplicate hooks from `components/ui/`
 - Add analytics (optional)
 - Consider adding blog functionality in future iteration
 - Implement light/dark mode toggle
@@ -115,6 +139,18 @@ Example usage in page.tsx:
 - Phase 2 (Future): Content expansion and additional features
 - Phase 3 (Future): Advanced interactivity and dynamic content
 
+## Known Issues
+
+### Terraform Backend Deploy Failing (pre-existing)
+The `deploy-backend.yml` workflow fails because the **Terraform IAM role** (`GitHubActions-TerraformBackendRole-robmclaughl-in`, stored in `secrets.TERRAFORM_AWS_IAM_ROLE_ARN`, AWS account `964943862554`) is missing CloudFront and WAF permissions. Error: `cloudfront:GetDistribution` denied.
+
+**Impact:** Terraform infrastructure changes cannot be applied via CI. The frontend deploy workflow (`deploy.yml`) is unaffected and works normally.
+
+**Fix:** Add `cloudfront:*` and `wafv2:*` permissions (or attach managed policies `CloudFrontFullAccess` + `AWSWAFFullAccess`) to the `GitHubActions-TerraformBackendRole-robmclaughl-in` role in the AWS IAM console. This role is managed manually, not by Terraform.
+
+### Build Fails Locally on Node.js v22
+`pnpm run build` fails with `TypeError: Cannot read properties of undefined (reading 'length')` in Webpack's `WasmHash`. This is a Next.js 15.1.0 / Node.js v22 compatibility issue. CI uses Node 18 and may not hit this. Consider upgrading Next.js or pinning local Node to v18/v20.
+
 ## Security Improvements (April 4, 2025)
 - ✅ Migrated from CloudFront Origin Access Identity (OAI) to Origin Access Control (OAC)
 - ✅ Enabled CloudFront access logging to a dedicated S3 bucket
@@ -129,4 +165,4 @@ Example usage in page.tsx:
 - ✅ Updated GitHub Actions workflow to use pnpm and removed redundant flags
 - ✅ Enabled S3 backend for Terraform state with DynamoDB locking
 
-*Last updated: March 29, 2026*
+*Last updated: March 30, 2026*

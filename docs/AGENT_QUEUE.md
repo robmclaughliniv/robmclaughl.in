@@ -7,10 +7,10 @@
 | Status | Count |
 |--------|-------|
 | Ready | 5 |
-| In Progress | 6 |
+| In Progress | 0 |
 | Blocked | 0 |
 | Superseded | 1 |
-| Completed | 0 |
+| Completed | 6 |
 
 ---
 
@@ -209,7 +209,7 @@ const DEFAULT_CHANNELS: Channel[] = [
 | **ID** | TASK-006 |
 | **Type** | Infrastructure |
 | **Priority** | P0 |
-| **Status** | In Progress |
+| **Status** | Completed |
 | **Feature Ref** | VG-001 |
 | **Phase** | 2 — Vibe Generator MVP, Milestone 1 (Audio Player) |
 | **Branch** | audio |
@@ -276,7 +276,7 @@ Set up S3/CloudFront hosting for audio files and a playlist JSON manifest that t
 | **ID** | TASK-007 |
 | **Type** | Feature |
 | **Priority** | P0 |
-| **Status** | In Progress |
+| **Status** | Completed |
 | **Feature Ref** | VG-001 |
 | **Phase** | 2 — Vibe Generator MVP, Milestone 1 (Audio Player) |
 | **Supersedes** | TASK-001 |
@@ -328,7 +328,7 @@ Build the core `AudioPlayer` React component with HTML5 Audio API integration an
 | **ID** | TASK-008 |
 | **Type** | Feature |
 | **Priority** | P0 |
-| **Status** | In Progress |
+| **Status** | Completed |
 | **Feature Ref** | VG-001 |
 | **Phase** | 2 — Vibe Generator MVP, Milestone 1 (Audio Player) |
 | **Branch** | audio |
@@ -386,7 +386,7 @@ Build the expanded player UI with all controls, styled to match the site's lo-fi
 | **ID** | TASK-009 |
 | **Type** | Feature |
 | **Priority** | P0 |
-| **Status** | In Progress |
+| **Status** | Completed |
 | **Feature Ref** | VG-001 |
 | **Phase** | 2 — Vibe Generator MVP, Milestone 1 (Audio Player) |
 | **Branch** | audio |
@@ -420,7 +420,7 @@ Build the minimized/collapsed version of the player — a small fixed button tha
 | **ID** | TASK-010 |
 | **Type** | Feature |
 | **Priority** | P0 |
-| **Status** | In Progress |
+| **Status** | Completed |
 | **Feature Ref** | VG-001 |
 | **Phase** | 2 — Vibe Generator MVP, Milestone 1 (Audio Player) |
 | **Branch** | audio |
@@ -456,7 +456,7 @@ Make the audio player compact and usable on mobile viewports.
 | **ID** | TASK-011 |
 | **Type** | Feature |
 | **Priority** | P0 |
-| **Status** | In Progress |
+| **Status** | Completed |
 | **Feature Ref** | VG-001 |
 | **Phase** | 2 — Vibe Generator MVP, Milestone 1 (Audio Player) |
 | **Branch** | audio |
@@ -669,8 +669,13 @@ When adding a task to the queue:
 
 | Task ID | Title | Completed | PR |
 |---------|-------|-----------|-----|
-| - | - | - | - |
+| TASK-006 | Audio Infrastructure — S3 Hosting & Playlist Manifest | March 29, 2026 | merged to master |
+| TASK-007 | Core AudioPlayer — Component & State Management | March 29, 2026 | merged to master |
+| TASK-008 | Player UI — Expanded State with Retro Styling | March 29, 2026 | merged to master |
+| TASK-009 | Player UI — Collapsed State | March 29, 2026 | merged to master |
+| TASK-010 | Audio Player — Mobile Responsive Design | March 29, 2026 | merged to master |
+| TASK-011 | Integration — Add Player to Site Layout | March 29, 2026 | merged to master |
 
 ---
 
-*Last updated: March 2026*
+*Last updated: March 29, 2026*
