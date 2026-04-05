@@ -51,6 +51,9 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Run Tests
+        run: pnpm run test
+
       - name: Build Production
         # No BASE_PATH needed for production
         run: pnpm run build
@@ -114,6 +117,9 @@ jobs:
           fi
           echo "BRANCH_SLUG=$BRANCH_SLUG" >> $GITHUB_OUTPUT
           echo "Preview Branch Slug: $BRANCH_SLUG"
+
+      - name: Run Tests
+        run: pnpm run test
 
       - name: Build Preview
         env:
