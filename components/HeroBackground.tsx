@@ -21,23 +21,26 @@ export function HeroBackground({
   overlayColor = 'rgba(173,216,230,0.25)',
 }: HeroBackgroundProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [isInViewport, setIsInViewport] = useState(false);
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [hasVideoError, setHasVideoError] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const handleVideoLoaded = useCallback(() => {
-    setIsVideoLoaded(true);
-    
-    if (videoRef.current && isInViewport) {
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.play().catch(() => {});
-        }
-      }, 300);
+  const tryPlay = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || hasVideoError) return;
+    if (document.hidden) return;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    if (video.paused) {
+      video.play().catch(() => {});
     }
-  }, [isInViewport]);
+  }, [hasVideoError]);
+
+  const handleVideoLoaded = useCallback(() => {
+    tryPlay();
+  }, [tryPlay]);
 
   const handleVideoError = useCallback(() => {
     setHasVideoError(true);
@@ -47,45 +50,25 @@ export function HeroBackground({
     const el = containerRef.current;
     if (!el) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          setIsInViewport(true);
-        } else {
-          setIsInViewport(false);
-        }
-      },
-      { threshold: 0.1 }
-    );
+    setIsVisible(true);
 
-    observer.observe(el);
-
-    // Restart CRT scanline animation on mount
     el.classList.remove('crt-screen');
     void el.offsetWidth;
     el.classList.add('crt-screen');
-
-    return () => observer.unobserve(el);
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!videoRef.current || hasVideoError) return;
-
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
-    if (isInViewport && !prefersReducedMotion) {
-      if (isVideoLoaded) {
-        const playPromise = videoRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(() => {});
-        }
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        videoRef.current?.pause();
+      } else {
+        tryPlay();
       }
-    } else if (videoRef.current && !videoRef.current.paused) {
-      videoRef.current.pause();
-    }
-  }, [isInViewport, isVideoLoaded, hasVideoError]);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [tryPlay]);
 
   const handleMouseEnter = useCallback(() => {
     if (videoRef.current) {
