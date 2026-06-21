@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { useBackgroundVideo } from '@/hooks/use-background-video';
 
 interface HeroBackgroundProps {
   className?: string;
@@ -10,16 +11,21 @@ interface HeroBackgroundProps {
   videoSrc?: string;
   videoWebmSrc?: string;
   overlayColor?: string;
+  syncWithAudio?: boolean;
 }
 
-export function HeroBackground({ 
-  className, 
-  children, 
+interface HeroBackgroundInnerProps extends Omit<HeroBackgroundProps, 'syncWithAudio'> {
+  activeVideoSrc: string;
+}
+
+const HeroBackgroundInner = ({
+  className,
+  children,
   mobileBackgroundImage = '/placeholder.svg',
-  videoSrc = '/videos/bg-sand.mp4',
+  activeVideoSrc,
   videoWebmSrc,
   overlayColor = 'rgba(173,216,230,0.25)',
-}: HeroBackgroundProps) {
+}: HeroBackgroundInnerProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [hasVideoError, setHasVideoError] = useState(false);
   const [isPoweringOn, setIsPoweringOn] = useState(true);
@@ -68,6 +74,10 @@ export function HeroBackground({
   }, []);
 
   useEffect(() => {
+    setHasVideoError(false);
+  }, [activeVideoSrc]);
+
+  useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
         videoRef.current?.pause();
@@ -92,8 +102,10 @@ export function HeroBackground({
     }
   }, []);
 
+  const showVideoFallback = hasVideoError;
+
   return (
-    <div 
+    <div
       ref={containerRef}
       className="fixed inset-0 w-full h-screen overflow-hidden crt-screen"
       onMouseEnter={handleMouseEnter}
@@ -102,18 +114,19 @@ export function HeroBackground({
       role="presentation"
     >
       <div className="crt-jitter absolute inset-0 w-full h-full" aria-hidden="true">
-        <div 
-          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat md:hidden" 
-          style={{ 
-            backgroundImage: `url(${mobileBackgroundImage})`,
-            display: hasVideoError ? 'block' : undefined
-          }}
+        <div
+          className={cn(
+            'absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat',
+            showVideoFallback ? 'block' : 'md:hidden'
+          )}
+          style={{ backgroundImage: `url(${mobileBackgroundImage})` }}
           role="img"
           aria-label="Background image"
         />
 
-        {!hasVideoError && (
+        {!showVideoFallback && (
           <video
+            key={activeVideoSrc}
             ref={videoRef}
             className="absolute inset-0 w-full h-full object-cover hidden md:block transition-[filter] duration-700 ease-in-out"
             autoPlay
@@ -126,24 +139,23 @@ export function HeroBackground({
             aria-hidden="true"
           >
             {videoWebmSrc && <source src={videoWebmSrc} type="video/webm" />}
-            <source src={videoSrc} type="video/mp4" />
-            Your browser does not support the video tag.
+            <source src={activeVideoSrc} type="video/mp4" />
           </video>
         )}
       </div>
 
-      <div 
+      <div
         className={cn(
-          "absolute inset-0 z-[1] transition-opacity duration-1000 ease-in-out",
-          isVisible ? "opacity-100" : "opacity-0"
+          'absolute inset-0 z-[1] transition-opacity duration-1000 ease-in-out',
+          isVisible ? 'opacity-100' : 'opacity-0'
         )}
         style={{ backgroundColor: overlayColor }}
       />
-      
-      <div 
+
+      <div
         className={cn(
-          "absolute inset-0 z-[2] opacity-0 transition-opacity duration-1500 ease-in-out",
-          isVisible ? "opacity-10" : "opacity-0"
+          'absolute inset-0 z-[2] opacity-0 transition-opacity duration-1500 ease-in-out',
+          isVisible ? 'opacity-10' : 'opacity-0'
         )}
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
@@ -152,19 +164,19 @@ export function HeroBackground({
         }}
         aria-hidden="true"
       />
-      
-      <div 
+
+      <div
         className={cn(
-          "absolute inset-0 z-[3] pointer-events-none",
-          isVisible ? "opacity-100" : "opacity-0"
+          'absolute inset-0 z-[3] pointer-events-none',
+          isVisible ? 'opacity-100' : 'opacity-0'
         )}
         style={{
-          boxShadow: "0 0 150px rgba(0, 0, 0, .01) inset",
+          boxShadow: '0 0 150px rgba(0, 0, 0, .01) inset',
           transitionDelay: '400ms',
         }}
         aria-hidden="true"
       />
-      
+
       <div className="crt-vignette" aria-hidden="true" />
 
       <div className="crt-glass" aria-hidden="true" />
@@ -179,9 +191,27 @@ export function HeroBackground({
         />
       )}
 
-      <div className={cn("relative z-50 w-full h-full flex items-center justify-center", className)}>
+      <div className={cn('relative z-50 w-full h-full flex items-center justify-center', className)}>
         {children}
       </div>
     </div>
   );
+};
+
+const SyncedHeroBackground = (props: Omit<HeroBackgroundProps, 'syncWithAudio' | 'videoSrc'>) => {
+  const { videoSrc } = useBackgroundVideo();
+
+  return <HeroBackgroundInner {...props} activeVideoSrc={videoSrc} />;
+};
+
+export function HeroBackground({
+  syncWithAudio = false,
+  videoSrc = '/videos/bg-sand.mp4',
+  ...props
+}: HeroBackgroundProps) {
+  if (syncWithAudio) {
+    return <SyncedHeroBackground {...props} />;
+  }
+
+  return <HeroBackgroundInner {...props} activeVideoSrc={videoSrc} />;
 }

@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <main id="main-content" className="crt-flicker relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
       <HeroBackground 
-        videoSrc="/videos/bg-sand.mp4" 
+        syncWithAudio
         mobileBackgroundImage="/placeholder.svg"
         overlayColor="rgba(13, 16, 45, 0.5)"
       >

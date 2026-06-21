@@ -1,11 +1,11 @@
 'use client';
 
-import { useAudioPlayer } from '@/hooks/use-audio-player';
+import { useAudioPlayerContext } from './AudioPlayerContext';
 import { PlayerControls } from './PlayerControls';
 import { CollapsedPlayer } from './CollapsedPlayer';
 
 export const AudioPlayer = () => {
-  const player = useAudioPlayer();
+  const player = useAudioPlayerContext();
 
   if (player.isLoading || player.hasError || player.tracks.length === 0) {
     return null;
