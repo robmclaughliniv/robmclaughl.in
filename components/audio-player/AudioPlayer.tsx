@@ -23,6 +23,7 @@ export const AudioPlayer = () => {
         <div className="flex justify-end">
           <CollapsedPlayer
             isPlaying={player.isPlaying}
+            analyserRef={player.analyserRef}
             onExpand={player.toggleCollapse}
           />
         </div>

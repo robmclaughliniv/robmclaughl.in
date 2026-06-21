@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useAudioAnalyser } from '@/hooks/use-audio-analyser';
 
 interface Track {
   id: string;
@@ -33,14 +34,46 @@ interface AudioPlayerActions {
   toggleCollapse: () => void;
 }
 
-export type UseAudioPlayerReturn = AudioPlayerState & AudioPlayerActions;
+export type UseAudioPlayerReturn = AudioPlayerState &
+  AudioPlayerActions & {
+    analyserRef: React.RefObject<AnalyserNode | null>;
+  };
 
 const PLAYLIST_URL = '/audio/playlist.json';
 const DEFAULT_VOLUME = 0.5;
 
+const attemptPlay = async (
+  audio: HTMLAudioElement,
+  ensureGraphReady: () => boolean,
+  resumeAudioContext: () => Promise<void>
+): Promise<boolean> => {
+  if (!ensureGraphReady()) return false;
+
+  // Must stay false when using MediaElementSource — element mute silences the graph.
+  audio.muted = false;
+  await resumeAudioContext();
+  try {
+    await audio.play();
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const createAudioElement = (): HTMLAudioElement => {
+  const audio = new Audio();
+  audio.preload = 'auto';
+  audio.setAttribute('playsinline', '');
+  return audio;
+};
+
 export const useAudioPlayer = (): UseAudioPlayerReturn => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  if (audioRef.current === null && typeof window !== 'undefined') {
+    audioRef.current = createAudioElement();
+  }
   const volumeBeforeMute = useRef(DEFAULT_VOLUME);
+  const interactionRetryRegistered = useRef(false);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
@@ -51,18 +84,40 @@ export const useAudioPlayer = (): UseAudioPlayerReturn => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hasError, setHasError] = useState(false);
 
-  // Create the Audio element once on mount
+  const { analyserRef, resumeAudioContext, ensureGraphReady } = useAudioAnalyser({
+    audioRef,
+    isMuted,
+    volume,
+  });
+
+  const registerInteractionRetry = useCallback(() => {
+    if (interactionRetryRegistered.current) return;
+    interactionRetryRegistered.current = true;
+
+    const handleInteraction = () => {
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      void attemptPlay(audio, ensureGraphReady, resumeAudioContext).then((success) => {
+        if (success) setIsPlaying(true);
+      });
+
+      window.removeEventListener('pointerdown', handleInteraction);
+      window.removeEventListener('keydown', handleInteraction);
+    };
+
+    window.addEventListener('pointerdown', handleInteraction, { once: true });
+    window.addEventListener('keydown', handleInteraction, { once: true });
+  }, [ensureGraphReady, resumeAudioContext]);
+
   useEffect(() => {
-    audioRef.current = new Audio();
-    audioRef.current.volume = DEFAULT_VOLUME;
-    audioRef.current.muted = true;
+    const audio = audioRef.current;
+    if (!audio) return;
 
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-        audioRef.current = null;
-      }
+      audio.pause();
+      audio.src = '';
+      audioRef.current = null;
     };
   }, []);
 
@@ -100,13 +155,15 @@ export const useAudioPlayer = (): UseAudioPlayerReturn => {
     audio.src = track.src;
     audio.load();
 
-    audio.muted = isMuted;
-    audio.volume = volume;
-
-    audio.play()
-      .then(() => setIsPlaying(true))
-      .catch(() => setIsPlaying(false));
-  }, [tracks, currentTrackIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+    void attemptPlay(audio, ensureGraphReady, resumeAudioContext).then((success) => {
+      if (success) {
+        setIsPlaying(true);
+      } else {
+        setIsPlaying(false);
+        registerInteractionRetry();
+      }
+    });
+  }, [tracks, currentTrackIndex, ensureGraphReady, resumeAudioContext, registerInteractionRetry]);
 
   // Advance to next track on ended
   useEffect(() => {
@@ -124,10 +181,13 @@ export const useAudioPlayer = (): UseAudioPlayerReturn => {
   }, [tracks.length]);
 
   const play = useCallback(() => {
-    audioRef.current?.play()
-      .then(() => setIsPlaying(true))
-      .catch(() => setIsPlaying(false));
-  }, []);
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    void attemptPlay(audio, ensureGraphReady, resumeAudioContext).then((success) => {
+      setIsPlaying(success);
+    });
+  }, [ensureGraphReady, resumeAudioContext]);
 
   const pause = useCallback(() => {
     audioRef.current?.pause();
@@ -135,38 +195,33 @@ export const useAudioPlayer = (): UseAudioPlayerReturn => {
   }, []);
 
   const toggleMute = useCallback(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
+    void resumeAudioContext();
 
     if (isMuted) {
-      audio.muted = false;
-      audio.volume = volumeBeforeMute.current;
       setVolumeState(volumeBeforeMute.current);
       setIsMuted(false);
     } else {
-      volumeBeforeMute.current = audio.volume;
-      audio.muted = true;
+      volumeBeforeMute.current = volume;
       setIsMuted(true);
     }
-  }, [isMuted]);
+  }, [isMuted, volume, resumeAudioContext]);
 
-  const setVolume = useCallback((newVolume: number) => {
-    const clamped = Math.max(0, Math.min(1, newVolume));
-    const audio = audioRef.current;
-    if (!audio) return;
+  const setVolume = useCallback(
+    (newVolume: number) => {
+      void resumeAudioContext();
+      const clamped = Math.max(0, Math.min(1, newVolume));
 
-    audio.volume = clamped;
-    setVolumeState(clamped);
-    volumeBeforeMute.current = clamped;
+      setVolumeState(clamped);
+      volumeBeforeMute.current = clamped;
 
-    if (clamped === 0) {
-      audio.muted = true;
-      setIsMuted(true);
-    } else if (isMuted) {
-      audio.muted = false;
-      setIsMuted(false);
-    }
-  }, [isMuted]);
+      if (clamped === 0) {
+        setIsMuted(true);
+      } else if (isMuted) {
+        setIsMuted(false);
+      }
+    },
+    [isMuted, resumeAudioContext]
+  );
 
   const nextTrack = useCallback(() => {
     if (tracks.length === 0) return;
@@ -195,6 +250,7 @@ export const useAudioPlayer = (): UseAudioPlayerReturn => {
     isLoading,
     isCollapsed,
     hasError,
+    analyserRef,
     play,
     pause,
     toggleMute,

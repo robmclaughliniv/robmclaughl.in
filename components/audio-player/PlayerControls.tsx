@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Minimize2, Music } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
+import { PixelWaveform } from '@/components/audio-player/PixelWaveform';
 import type { UseAudioPlayerReturn } from '@/hooks/use-audio-player';
 
 interface PlayerControlsProps {
@@ -35,28 +36,38 @@ export const PlayerControls = ({ player, className }: PlayerControlsProps) => {
   return (
     <div
       className={cn(
-        "rounded-lg border border-border/60 bg-background/80 backdrop-blur-md p-3 shadow-xl",
-        "transition-all duration-300 ease-in-out",
-        "w-[calc(100vw-2rem)] md:w-72",
+        'player-pixel-border box-flicker bg-secondary/90 p-3 opacity-80',
+        'transition-all duration-300 ease-in-out',
+        'w-[calc(100vw-2rem)] md:w-72',
         className
       )}
     >
-      {/* Track info */}
-      <div className="flex items-center justify-between mb-2.5">
-        <div className="flex items-center gap-2 min-w-0">
-          <Music className="size-3.5 shrink-0 text-accent" aria-hidden="true" />
-          <span className="text-xs font-mono text-muted-foreground truncate">
-            {currentTrack?.title ?? 'No track'}
+      {/* Track info + waveform */}
+      <div className="flex items-center justify-between gap-2 mb-2.5">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <PixelWaveform
+            analyserRef={player.analyserRef}
+            isPlaying={player.isPlaying}
+            barCount={12}
+            className="h-4 w-12 shrink-0"
+          />
+          <span
+            className={cn(
+              'text-[8px] font-pixel leading-tight truncate',
+              player.isPlaying ? 'text-flicker text-accent' : 'text-muted-foreground'
+            )}
+          >
+            {currentTrack?.title ?? 'NO TRACK'}
           </span>
         </div>
         <Button
           variant="ghost"
           size="icon"
-          className="size-8 md:size-6 shrink-0 text-muted-foreground hover:text-accent transition-colors duration-200"
+          className="player-btn size-8 shrink-0 rounded-none border border-border bg-background/50 text-muted-foreground hover:text-accent hover:border-accent/60 md:size-7"
           onClick={player.toggleCollapse}
           aria-label="Minimize player"
         >
-          <Minimize2 className="size-4 md:size-3.5" />
+          <Minimize2 className="size-3.5" />
         </Button>
       </div>
 
@@ -65,44 +76,53 @@ export const PlayerControls = ({ player, className }: PlayerControlsProps) => {
         <Button
           variant="ghost"
           size="icon"
-          className="size-11 md:size-8 text-muted-foreground hover:text-accent player-btn"
+          className="player-btn size-11 rounded-none border border-border bg-background/50 text-muted-foreground hover:text-accent hover:border-accent/60 md:size-8"
           onClick={player.prevTrack}
           aria-label="Previous track"
         >
-          <SkipBack className="size-5 md:size-4" />
+          <SkipBack className="size-4" />
         </Button>
 
         <Button
           variant="ghost"
           size="icon"
-          className="size-11 md:size-9 text-foreground hover:text-accent player-btn"
+          className={cn(
+            'player-btn size-11 rounded-none border bg-background/50 md:size-9',
+            player.isPlaying
+              ? 'border-accent/60 text-accent text-flicker'
+              : 'border-border text-foreground hover:text-accent hover:border-accent/60'
+          )}
           onClick={handlePlayPause}
           aria-label={player.isPlaying ? 'Pause' : 'Play'}
         >
           {player.isPlaying ? (
-            <Pause className="size-6 md:size-5" />
+            <Pause className="size-5" />
           ) : (
-            <Play className="size-6 md:size-5 ml-0.5" />
+            <Play className="size-5 ml-0.5" />
           )}
         </Button>
 
         <Button
           variant="ghost"
           size="icon"
-          className="size-11 md:size-8 text-muted-foreground hover:text-accent player-btn"
+          className="player-btn size-11 rounded-none border border-border bg-background/50 text-muted-foreground hover:text-accent hover:border-accent/60 md:size-8"
           onClick={player.nextTrack}
           aria-label="Next track"
         >
-          <SkipForward className="size-5 md:size-4" />
+          <SkipForward className="size-4" />
         </Button>
 
-        <div className="w-px h-5 bg-border/40 mx-1" aria-hidden="true" />
+        <div className="mx-1 h-5 w-px bg-border" aria-hidden="true" />
 
-        {/* On mobile: tap toggles volume slider. On desktop: just mutes. */}
         <Button
           variant="ghost"
           size="icon"
-          className="size-11 md:size-8 text-muted-foreground hover:text-accent player-btn"
+          className={cn(
+            'player-btn size-11 rounded-none border bg-background/50 md:size-8',
+            player.isMuted
+              ? 'border-border text-muted-foreground hover:text-accent hover:border-accent/60'
+              : 'border-accent/60 text-accent'
+          )}
           onClick={() => {
             handleVolumeToggle();
             if (typeof window !== 'undefined' && window.innerWidth >= 768) {
@@ -112,44 +132,42 @@ export const PlayerControls = ({ player, className }: PlayerControlsProps) => {
           aria-label={player.isMuted ? 'Unmute' : 'Mute'}
         >
           {player.isMuted ? (
-            <VolumeX className="size-5 md:size-4" />
+            <VolumeX className="size-4" />
           ) : (
-            <Volume2 className="size-5 md:size-4" />
+            <Volume2 className="size-4" />
           )}
         </Button>
 
-        {/* Desktop: always visible inline slider */}
         <Slider
           value={[player.isMuted ? 0 : player.volume]}
           max={1}
           step={0.01}
           onValueChange={handleVolumeChange}
-          className="w-20 player-slider hidden md:flex"
+          className="player-slider hidden w-20 md:flex"
           aria-label="Volume"
         />
       </div>
 
-      {/* Mobile: volume slider row, toggled by volume icon */}
       {showVolume && (
-        <div className="flex items-center gap-3 mt-2.5 px-1 md:hidden">
+        <div className="mt-2.5 flex items-center gap-3 px-1 md:hidden">
           <VolumeX className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
           <Slider
             value={[player.isMuted ? 0 : player.volume]}
             max={1}
             step={0.01}
             onValueChange={handleVolumeChange}
-            className="flex-1 player-slider"
+            className="player-slider flex-1"
             aria-label="Volume"
           />
           <Volume2 className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 shrink-0 text-muted-foreground hover:text-accent player-btn"
+            className="player-btn size-8 shrink-0 rounded-none border border-border bg-background/50 text-muted-foreground hover:text-accent hover:border-accent/60"
             onClick={player.toggleMute}
             aria-label={player.isMuted ? 'Unmute' : 'Mute'}
           >
-            <span className="text-[10px] font-mono">
+            <span className="font-pixel text-[8px]">
               {player.isMuted ? 'OFF' : 'ON'}
             </span>
           </Button>

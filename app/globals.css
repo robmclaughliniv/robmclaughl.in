@@ -403,34 +403,54 @@
   transform: scale(1.05);
 }
 
-/* Audio player button glow */
+/* Audio player — pixel retro frame */
+.player-pixel-border {
+  box-shadow:
+    0 0 0 2px hsl(var(--background)),
+    0 0 0 4px hsl(var(--border)),
+    0 0 0 6px hsl(var(--background)),
+    0 0 0 8px hsl(var(--accent) / 0.35);
+}
+
+/* Audio player button — pixel hover outline */
 .player-btn {
-  transition: color 0.2s ease, filter 0.2s ease;
+  transition: color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .player-btn:hover {
-  filter: drop-shadow(0 0 4px rgba(255, 102, 199, 0.6));
+  box-shadow: 0 0 0 1px hsl(var(--accent) / 0.8);
 }
 
-/* Audio player slider — neon accent track and thumb */
+/* Audio player slider — blocky pixel track and thumb */
 .player-slider [data-orientation="horizontal"] > span:first-child {
   background-color: hsl(var(--muted));
+  border-radius: 0;
+  height: 6px;
 }
 
 .player-slider [data-orientation="horizontal"] > span:first-child > span {
   background-color: hsl(var(--accent));
+  border-radius: 0;
 }
 
 .player-slider span[role="slider"] {
-  height: 14px;
-  width: 14px;
+  height: 10px;
+  width: 10px;
+  border-radius: 0;
+  border-width: 2px;
   border-color: hsl(var(--accent));
-  transition: box-shadow 0.2s ease;
+  background-color: hsl(var(--background));
+  transition: box-shadow 0.15s ease;
 }
 
 .player-slider span[role="slider"]:hover,
 .player-slider span[role="slider"]:focus-visible {
-  box-shadow: 0 0 6px rgba(255, 102, 199, 0.7);
+  box-shadow: 0 0 0 1px hsl(var(--accent));
+}
+
+.image-rendering-pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 /* Eliminate 300ms tap delay on mobile */
