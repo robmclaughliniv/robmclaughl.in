@@ -22,6 +22,7 @@ export function HeroBackground({
 }: HeroBackgroundProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [hasVideoError, setHasVideoError] = useState(false);
+  const [isPoweringOn, setIsPoweringOn] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -52,9 +53,18 @@ export function HeroBackground({
 
     setIsVisible(true);
 
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      setIsPoweringOn(false);
+    }
+
     el.classList.remove('crt-screen');
     void el.offsetWidth;
     el.classList.add('crt-screen');
+  }, []);
+
+  const handlePowerOnEnd = useCallback(() => {
+    setIsPoweringOn(false);
   }, []);
 
   useEffect(() => {
@@ -91,34 +101,36 @@ export function HeroBackground({
       data-testid="hero-background"
       role="presentation"
     >
-      <div 
-        className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat md:hidden" 
-        style={{ 
-          backgroundImage: `url(${mobileBackgroundImage})`,
-          display: hasVideoError ? 'block' : undefined
-        }}
-        role="img"
-        aria-label="Background image"
-      />
+      <div className="crt-jitter absolute inset-0 w-full h-full" aria-hidden="true">
+        <div 
+          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat md:hidden" 
+          style={{ 
+            backgroundImage: `url(${mobileBackgroundImage})`,
+            display: hasVideoError ? 'block' : undefined
+          }}
+          role="img"
+          aria-label="Background image"
+        />
 
-      {!hasVideoError && (
-        <video
-          ref={videoRef}
-          className="absolute inset-0 w-full h-full object-cover hidden md:block transition-[filter] duration-700 ease-in-out"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          onLoadedData={handleVideoLoaded}
-          onError={handleVideoError}
-          aria-hidden="true"
-        >
-          {videoWebmSrc && <source src={videoWebmSrc} type="video/webm" />}
-          <source src={videoSrc} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-      )}
+        {!hasVideoError && (
+          <video
+            ref={videoRef}
+            className="absolute inset-0 w-full h-full object-cover hidden md:block transition-[filter] duration-700 ease-in-out"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            onLoadedData={handleVideoLoaded}
+            onError={handleVideoError}
+            aria-hidden="true"
+          >
+            {videoWebmSrc && <source src={videoWebmSrc} type="video/webm" />}
+            <source src={videoSrc} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        )}
+      </div>
 
       <div 
         className={cn(
@@ -153,6 +165,20 @@ export function HeroBackground({
         aria-hidden="true"
       />
       
+      <div className="crt-vignette" aria-hidden="true" />
+
+      <div className="crt-glass" aria-hidden="true" />
+
+      <div className="crt-static-bar" aria-hidden="true" />
+
+      {isPoweringOn && (
+        <div
+          className="crt-power-on"
+          aria-hidden="true"
+          onAnimationEnd={handlePowerOnEnd}
+        />
+      )}
+
       <div className={cn("relative z-50 w-full h-full flex items-center justify-center", className)}>
         {children}
       </div>
