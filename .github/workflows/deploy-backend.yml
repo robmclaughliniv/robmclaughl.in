@@ -73,6 +73,10 @@ jobs:
           # - API Gateway v2 (create/update/delete API, stage, integration, route)
           # - IAM (create/update/delete role, policy, attach policy - for lambda exec role and potentially others)
           # - CloudWatch Logs (create/update log group - for lambda)
+          # - CloudFront (distributions, OAC, OAI, functions, response headers policies, tagging)
+          # - WAF v2 (web ACLs, tagging)
+          # - ACM (certificates, validation, tagging)
+          # - Route53 (hosted zones, record sets)
           role-to-assume: ${{ secrets.TERRAFORM_AWS_IAM_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION || 'us-west-2' }} # Use repo variable or default
 

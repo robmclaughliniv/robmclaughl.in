@@ -21,23 +21,27 @@ export function HeroBackground({
   overlayColor = 'rgba(173,216,230,0.25)',
 }: HeroBackgroundProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [isInViewport, setIsInViewport] = useState(false);
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [hasVideoError, setHasVideoError] = useState(false);
+  const [isPoweringOn, setIsPoweringOn] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const handleVideoLoaded = useCallback(() => {
-    setIsVideoLoaded(true);
-    
-    if (videoRef.current && isInViewport) {
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.play().catch(() => {});
-        }
-      }, 300);
+  const tryPlay = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || hasVideoError) return;
+    if (document.hidden) return;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    if (video.paused) {
+      video.play().catch(() => {});
     }
-  }, [isInViewport]);
+  }, [hasVideoError]);
+
+  const handleVideoLoaded = useCallback(() => {
+    tryPlay();
+  }, [tryPlay]);
 
   const handleVideoError = useCallback(() => {
     setHasVideoError(true);
@@ -47,45 +51,34 @@ export function HeroBackground({
     const el = containerRef.current;
     if (!el) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          setIsInViewport(true);
-        } else {
-          setIsInViewport(false);
-        }
-      },
-      { threshold: 0.1 }
-    );
+    setIsVisible(true);
 
-    observer.observe(el);
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      setIsPoweringOn(false);
+    }
 
-    // Restart CRT scanline animation on mount
     el.classList.remove('crt-screen');
     void el.offsetWidth;
     el.classList.add('crt-screen');
+  }, []);
 
-    return () => observer.unobserve(el);
+  const handlePowerOnEnd = useCallback(() => {
+    setIsPoweringOn(false);
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!videoRef.current || hasVideoError) return;
-
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
-    if (isInViewport && !prefersReducedMotion) {
-      if (isVideoLoaded) {
-        const playPromise = videoRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(() => {});
-        }
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        videoRef.current?.pause();
+      } else {
+        tryPlay();
       }
-    } else if (videoRef.current && !videoRef.current.paused) {
-      videoRef.current.pause();
-    }
-  }, [isInViewport, isVideoLoaded, hasVideoError]);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [tryPlay]);
 
   const handleMouseEnter = useCallback(() => {
     if (videoRef.current) {
@@ -108,34 +101,36 @@ export function HeroBackground({
       data-testid="hero-background"
       role="presentation"
     >
-      <div 
-        className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat md:hidden" 
-        style={{ 
-          backgroundImage: `url(${mobileBackgroundImage})`,
-          display: hasVideoError ? 'block' : undefined
-        }}
-        role="img"
-        aria-label="Background image"
-      />
+      <div className="crt-jitter absolute inset-0 w-full h-full" aria-hidden="true">
+        <div 
+          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat md:hidden" 
+          style={{ 
+            backgroundImage: `url(${mobileBackgroundImage})`,
+            display: hasVideoError ? 'block' : undefined
+          }}
+          role="img"
+          aria-label="Background image"
+        />
 
-      {!hasVideoError && (
-        <video
-          ref={videoRef}
-          className="absolute inset-0 w-full h-full object-cover hidden md:block transition-[filter] duration-700 ease-in-out"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          onLoadedData={handleVideoLoaded}
-          onError={handleVideoError}
-          aria-hidden="true"
-        >
-          {videoWebmSrc && <source src={videoWebmSrc} type="video/webm" />}
-          <source src={videoSrc} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-      )}
+        {!hasVideoError && (
+          <video
+            ref={videoRef}
+            className="absolute inset-0 w-full h-full object-cover hidden md:block transition-[filter] duration-700 ease-in-out"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            onLoadedData={handleVideoLoaded}
+            onError={handleVideoError}
+            aria-hidden="true"
+          >
+            {videoWebmSrc && <source src={videoWebmSrc} type="video/webm" />}
+            <source src={videoSrc} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        )}
+      </div>
 
       <div 
         className={cn(
@@ -170,6 +165,20 @@ export function HeroBackground({
         aria-hidden="true"
       />
       
+      <div className="crt-vignette" aria-hidden="true" />
+
+      <div className="crt-glass" aria-hidden="true" />
+
+      <div className="crt-static-bar" aria-hidden="true" />
+
+      {isPoweringOn && (
+        <div
+          className="crt-power-on"
+          aria-hidden="true"
+          onAnimationEnd={handlePowerOnEnd}
+        />
+      )}
+
       <div className={cn("relative z-50 w-full h-full flex items-center justify-center", className)}>
         {children}
       </div>

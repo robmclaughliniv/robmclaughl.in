@@ -14,14 +14,14 @@ const inter = Inter({
 const spaceMono = Space_Mono({
   weight: ["400", "700"],
   subsets: ["latin"],
-  display: "swap",
+  display: "block",
   variable: "--font-space-mono",
 })
 
 const pressStart2P = Press_Start_2P({
   weight: ["400"],
   subsets: ["latin"],
-  display: "swap",
+  display: "block",
   variable: "--font-press-start-2p",
 })
 
