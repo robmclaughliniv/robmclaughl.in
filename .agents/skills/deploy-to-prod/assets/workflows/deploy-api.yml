@@ -1,0 +1,62 @@
+# API Lambda code deploy for __APP_NAME__ (only generated when enable_api=true).
+# Terraform created the function with a placeholder and ignores code drift;
+# this workflow ships real code via `lambda update-function-code`.
+#
+# Required repo variables (set by bootstrap.sh):
+#   AWS_DEPLOY_ROLE_ARN, AWS_REGION, LAMBDA_FUNCTION_NAME
+
+name: Deploy API
+
+on:
+  push:
+    branches: [__DEFAULT_BRANCH__]
+    paths:
+      - "__API_SRC_DIR__/**"
+  workflow_dispatch:
+
+permissions:
+  id-token: write # OIDC
+  contents: read
+
+concurrency:
+  group: deploy-api
+  cancel-in-progress: false
+
+jobs:
+  deploy-api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: __PNPM_VERSION__
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "__NODE_VERSION__"
+          cache: "__PKG_MANAGER__"
+
+      - name: Install dependencies
+        run: __INSTALL_CMD__
+
+      # Must produce the zip at __API_ARTIFACT__ (e.g. `cd api && pnpm run package`).
+      - name: Build & package Lambda
+        run: __API_BUILD_CMD__
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: __APP_NAME__-api-deploy
+
+      - name: Update Lambda code
+        run: |
+          aws lambda update-function-code \
+            --function-name "${{ vars.LAMBDA_FUNCTION_NAME }}" \
+            --zip-file "fileb://__API_ARTIFACT__" \
+            --publish
