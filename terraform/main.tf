@@ -64,7 +64,7 @@ module "acm" {
   count  = terraform.workspace == "prod" ? 1 : 0
   source = "./modules/acm"
   domain_name = "robmclaughl.in"
-  subject_alternative_names = ["www.robmclaughl.in"]
+  subject_alternative_names = ["www.robmclaughl.in", "*.robmclaughl.in"]
   # Reference route53 module using count index
   zone_id = module.route53[0].zone_id
   
