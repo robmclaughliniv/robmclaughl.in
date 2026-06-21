@@ -41,7 +41,7 @@ provider "aws" {
 
 ```hcl
 module "site" {
-  source = "github.com/robmclaughliniv/robmclaughl.in//terraform/modules/static-site?ref=static-site-v1.0.0"
+  source = "github.com/robmclaughliniv/robmclaughl.in//terraform/modules/static-site?ref=static-site-v1.0.1"
 
   app_name  = "craps-trainer"
   subdomain = "craps-trainer"          # => craps-trainer.robmclaughl.in
@@ -58,7 +58,7 @@ module "site" {
 
 ```hcl
 module "site" {
-  source = "github.com/robmclaughliniv/robmclaughl.in//terraform/modules/static-site?ref=static-site-v1.0.0"
+  source = "github.com/robmclaughliniv/robmclaughl.in//terraform/modules/static-site?ref=static-site-v1.0.1"
 
   app_name  = "ledger"
   subdomain = "ledger"

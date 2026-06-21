@@ -39,7 +39,7 @@ The wrapper's module block ends up as:
 
 ```hcl
 module "site" {
-  source = "git::https://github.com/robmclaughliniv/robmclaughl.in.git//terraform/modules/static-site?ref=static-site-v1.0.0"
+  source = "git::https://github.com/robmclaughliniv/robmclaughl.in.git//terraform/modules/static-site?ref=static-site-v1.0.1"
 
   app_name  = "craps-trainer"
   subdomain = "craps-trainer"
