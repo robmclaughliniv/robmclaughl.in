@@ -41,6 +41,12 @@ export type UseAudioPlayerReturn = AudioPlayerState &
 
 const PLAYLIST_URL = '/audio/playlist.json';
 const DEFAULT_VOLUME = 0.5;
+const MOBILE_BREAKPOINT = 768;
+
+const getInitialCollapsed = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth < MOBILE_BREAKPOINT;
+};
 
 const shuffleTracks = <T,>(items: T[]): T[] => {
   const shuffled = [...items];
@@ -90,7 +96,7 @@ export const useAudioPlayer = (): UseAudioPlayerReturn => {
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(getInitialCollapsed);
   const [hasError, setHasError] = useState(false);
 
   const { analyserRef, resumeAudioContext, ensureGraphReady } = useAudioAnalyser({
@@ -118,6 +124,19 @@ export const useAudioPlayer = (): UseAudioPlayerReturn => {
     window.addEventListener('pointerdown', handleInteraction, { once: true });
     window.addEventListener('keydown', handleInteraction, { once: true });
   }, [ensureGraphReady, resumeAudioContext]);
+
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
+
+    const handleViewportChange = (event: MediaQueryListEvent) => {
+      if (event.matches) {
+        setIsCollapsed(true);
+      }
+    };
+
+    mql.addEventListener('change', handleViewportChange);
+    return () => mql.removeEventListener('change', handleViewportChange);
+  }, []);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -207,10 +226,13 @@ export const useAudioPlayer = (): UseAudioPlayerReturn => {
     void resumeAudioContext();
 
     if (isMuted) {
-      setVolumeState(volumeBeforeMute.current);
+      const restored =
+        volumeBeforeMute.current > 0 ? volumeBeforeMute.current : DEFAULT_VOLUME;
+      setVolumeState(restored);
+      volumeBeforeMute.current = restored;
       setIsMuted(false);
     } else {
-      volumeBeforeMute.current = volume;
+      volumeBeforeMute.current = volume > 0 ? volume : DEFAULT_VOLUME;
       setIsMuted(true);
     }
   }, [isMuted, volume, resumeAudioContext]);
@@ -220,16 +242,22 @@ export const useAudioPlayer = (): UseAudioPlayerReturn => {
       void resumeAudioContext();
       const clamped = Math.max(0, Math.min(1, newVolume));
 
+      if (clamped === 0) {
+        if (!isMuted && volume > 0) {
+          volumeBeforeMute.current = volume;
+        }
+        setVolumeState(0);
+        setIsMuted(true);
+        return;
+      }
+
       setVolumeState(clamped);
       volumeBeforeMute.current = clamped;
-
-      if (clamped === 0) {
-        setIsMuted(true);
-      } else if (isMuted) {
+      if (isMuted) {
         setIsMuted(false);
       }
     },
-    [isMuted, resumeAudioContext]
+    [isMuted, volume, resumeAudioContext]
   );
 
   const nextTrack = useCallback(() => {

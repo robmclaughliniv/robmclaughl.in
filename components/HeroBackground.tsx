@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { useBackgroundVideo } from '@/hooks/use-background-video';
+import { useSyncedBackgrounds } from '@/hooks/use-synced-backgrounds';
 
 interface HeroBackgroundProps {
   className?: string;
@@ -16,6 +16,7 @@ interface HeroBackgroundProps {
 
 interface HeroBackgroundInnerProps extends Omit<HeroBackgroundProps, 'syncWithAudio'> {
   activeVideoSrc: string;
+  activeMobileImageSrc?: string;
 }
 
 const HeroBackgroundInner = ({
@@ -23,6 +24,7 @@ const HeroBackgroundInner = ({
   children,
   mobileBackgroundImage = '/placeholder.svg',
   activeVideoSrc,
+  activeMobileImageSrc,
   videoWebmSrc,
   overlayColor = 'rgba(173,216,230,0.25)',
 }: HeroBackgroundInnerProps) => {
@@ -103,6 +105,7 @@ const HeroBackgroundInner = ({
   }, []);
 
   const showVideoFallback = hasVideoError;
+  const resolvedMobileImage = activeMobileImageSrc ?? mobileBackgroundImage;
 
   return (
     <div
@@ -116,10 +119,10 @@ const HeroBackgroundInner = ({
       <div className="crt-jitter absolute inset-0 w-full h-full" aria-hidden="true">
         <div
           className={cn(
-            'absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat',
+            'absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-opacity duration-700 ease-in-out',
             showVideoFallback ? 'block' : 'md:hidden'
           )}
-          style={{ backgroundImage: `url(${mobileBackgroundImage})` }}
+          style={{ backgroundImage: `url(${resolvedMobileImage})` }}
           role="img"
           aria-label="Background image"
         />
@@ -199,9 +202,15 @@ const HeroBackgroundInner = ({
 };
 
 const SyncedHeroBackground = (props: Omit<HeroBackgroundProps, 'syncWithAudio' | 'videoSrc'>) => {
-  const { videoSrc } = useBackgroundVideo();
+  const { videoSrc, mobileImageSrc } = useSyncedBackgrounds();
 
-  return <HeroBackgroundInner {...props} activeVideoSrc={videoSrc} />;
+  return (
+    <HeroBackgroundInner
+      {...props}
+      activeVideoSrc={videoSrc}
+      activeMobileImageSrc={mobileImageSrc}
+    />
+  );
 };
 
 export function HeroBackground({

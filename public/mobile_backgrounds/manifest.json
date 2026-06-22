@@ -1,0 +1,7 @@
+{
+  "images": [
+    { "id": "mb1", "src": "/mobile_backgrounds/mb1.jpg" },
+    { "id": "mb2", "src": "/mobile_backgrounds/mb2.jpg" },
+    { "id": "mb3", "src": "/mobile_backgrounds/mb3.jpg" }
+  ]
+}

@@ -7,9 +7,8 @@ import { HeroBackground } from "@/components/HeroBackground"
 export default function Home() {
   return (
     <main id="main-content" className="crt-flicker relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-      <HeroBackground 
+      <HeroBackground
         syncWithAudio
-        mobileBackgroundImage="/placeholder.svg"
         overlayColor="rgba(13, 16, 45, 0.5)"
       >
         <div className="relative z-10 flex flex-col items-center justify-center max-w-2xl mx-auto text-center h-full my-auto drop-shadow-2xl">

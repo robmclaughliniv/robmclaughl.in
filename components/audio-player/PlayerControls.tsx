@@ -5,6 +5,7 @@ import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Minimize2 } from 
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { PixelWaveform } from '@/components/audio-player/PixelWaveform';
 import type { UseAudioPlayerReturn } from '@/hooks/use-audio-player';
 
@@ -15,6 +16,7 @@ interface PlayerControlsProps {
 
 export const PlayerControls = ({ player, className }: PlayerControlsProps) => {
   const [showVolume, setShowVolume] = useState(false);
+  const isMobile = useIsMobile();
   const currentTrack = player.tracks[player.currentTrackIndex];
 
   const handlePlayPause = () => {
@@ -29,9 +31,16 @@ export const PlayerControls = ({ player, className }: PlayerControlsProps) => {
     player.setVolume(value[0]);
   };
 
-  const handleVolumeToggle = () => {
-    setShowVolume((prev) => !prev);
+  const handleVolumeButtonClick = () => {
+    const wasMuted = player.isMuted;
+    player.toggleMute();
+
+    if (isMobile) {
+      setShowVolume(!wasMuted);
+    }
   };
+
+  const sliderVolume = player.isMuted ? 0 : player.volume;
 
   return (
     <div
@@ -123,12 +132,7 @@ export const PlayerControls = ({ player, className }: PlayerControlsProps) => {
               ? 'border-border text-muted-foreground hover:text-accent hover:border-accent/60'
               : 'border-accent/60 text-accent'
           )}
-          onClick={() => {
-            handleVolumeToggle();
-            if (typeof window !== 'undefined' && window.innerWidth >= 768) {
-              player.toggleMute();
-            }
-          }}
+          onClick={handleVolumeButtonClick}
           aria-label={player.isMuted ? 'Unmute' : 'Mute'}
         >
           {player.isMuted ? (
@@ -139,7 +143,7 @@ export const PlayerControls = ({ player, className }: PlayerControlsProps) => {
         </Button>
 
         <Slider
-          value={[player.isMuted ? 0 : player.volume]}
+          value={[sliderVolume]}
           max={1}
           step={0.01}
           onValueChange={handleVolumeChange}
@@ -152,7 +156,7 @@ export const PlayerControls = ({ player, className }: PlayerControlsProps) => {
         <div className="mt-2.5 flex items-center gap-3 px-1 md:hidden">
           <VolumeX className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
           <Slider
-            value={[player.isMuted ? 0 : player.volume]}
+            value={[sliderVolume]}
             max={1}
             step={0.01}
             onValueChange={handleVolumeChange}
@@ -160,17 +164,6 @@ export const PlayerControls = ({ player, className }: PlayerControlsProps) => {
             aria-label="Volume"
           />
           <Volume2 className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="player-btn size-8 shrink-0 rounded-none border border-border bg-background/50 text-muted-foreground hover:text-accent hover:border-accent/60"
-            onClick={player.toggleMute}
-            aria-label={player.isMuted ? 'Unmute' : 'Mute'}
-          >
-            <span className="font-pixel text-[8px]">
-              {player.isMuted ? 'OFF' : 'ON'}
-            </span>
-          </Button>
         </div>
       )}
     </div>
