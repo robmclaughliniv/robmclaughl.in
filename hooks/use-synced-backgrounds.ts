@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAudioPlayerContext } from '@/components/audio-player/AudioPlayerContext';
 
 const VIDEO_MANIFEST_URL = '/videos/manifest.json';
-const IMAGE_MANIFEST_URL = '/mobile_backgrounds/manifest.json';
+const MOBILE_MANIFEST_URL = '/mobile_backgrounds/manifest.json';
 const FALLBACK_VIDEO = '/videos/bg-sand.mp4';
 const FALLBACK_IMAGE = '/placeholder.svg';
 
@@ -13,12 +13,22 @@ interface MediaEntry {
   src: string;
 }
 
+interface MobileVideoEntry extends MediaEntry {
+  poster?: string;
+}
+
 interface VideoManifest {
   videos: MediaEntry[];
 }
 
-interface ImageManifest {
-  images: MediaEntry[];
+interface MobileManifest {
+  videos?: MobileVideoEntry[];
+  images?: MediaEntry[];
+}
+
+export interface MobileBackgroundEntry {
+  src: string;
+  poster: string;
 }
 
 export const pickRandomItem = (items: string[], fallback: string, exclude?: string): string => {
@@ -44,24 +54,44 @@ const loadVideoManifest = async (): Promise<string[]> => {
   return data.videos.map((video) => video.src);
 };
 
-const loadImageManifest = async (): Promise<string[]> => {
-  const response = await fetch(IMAGE_MANIFEST_URL);
-  if (!response.ok) throw new Error(`Image manifest HTTP ${response.status}`);
+const loadMobileManifest = async (): Promise<{
+  videos: MobileBackgroundEntry[];
+  images: string[];
+}> => {
+  const response = await fetch(MOBILE_MANIFEST_URL);
+  if (!response.ok) throw new Error(`Mobile manifest HTTP ${response.status}`);
 
-  const data: ImageManifest = await response.json();
-  if (!data.images?.length) throw new Error('Empty image manifest');
+  const data: MobileManifest = await response.json();
+  const images = data.images?.map((image) => image.src) ?? [];
+  const imagePosterById = new Map(
+    data.images?.map((image) => [image.id, image.src]) ?? []
+  );
 
-  return data.images.map((image) => image.src);
+  const videos =
+    data.videos?.map((video) => ({
+      src: video.src,
+      poster: video.poster ?? imagePosterById.get(video.id) ?? FALLBACK_IMAGE,
+    })) ?? [];
+
+  if (videos.length === 0 && images.length === 0) {
+    throw new Error('Empty mobile manifest');
+  }
+
+  return { videos, images };
 };
 
 export const useSyncedBackgrounds = () => {
   const { currentTrackIndex, tracks } = useAudioPlayerContext();
   const [videoSrc, setVideoSrc] = useState(FALLBACK_VIDEO);
+  const [mobileVideoSrc, setMobileVideoSrc] = useState<string | null>(null);
+  const [mobilePosterSrc, setMobilePosterSrc] = useState(FALLBACK_IMAGE);
   const [mobileImageSrc, setMobileImageSrc] = useState(FALLBACK_IMAGE);
   const [isLoading, setIsLoading] = useState(true);
   const videosRef = useRef<string[]>([]);
+  const mobileVideosRef = useRef<MobileBackgroundEntry[]>([]);
   const imagesRef = useRef<string[]>([]);
   const lastVideoRef = useRef(FALLBACK_VIDEO);
+  const lastMobileVideoRef = useRef<string | null>(null);
   const lastImageRef = useRef(FALLBACK_IMAGE);
   const prevTrackKeyRef = useRef<string | null>(null);
 
@@ -77,6 +107,24 @@ export const useSyncedBackgrounds = () => {
     setMobileImageSrc(next);
   };
 
+  const selectNextMobileVideo = (exclude = lastMobileVideoRef.current) => {
+    const pool = mobileVideosRef.current;
+    if (pool.length === 0) {
+      selectNextImage();
+      setMobileVideoSrc(null);
+      return;
+    }
+
+    const sources = pool.map((entry) => entry.src);
+    const nextSrc = pickRandomItem(sources, pool[0].src, exclude);
+    const entry = pool.find((item) => item.src === nextSrc) ?? pool[0];
+
+    lastMobileVideoRef.current = nextSrc;
+    setMobileVideoSrc(nextSrc);
+    setMobilePosterSrc(entry.poster);
+    setMobileImageSrc(entry.poster);
+  };
+
   const currentTrackKey =
     tracks.length > 0
       ? `${currentTrackIndex}:${tracks[currentTrackIndex]?.id ?? 'unknown'}`
@@ -84,9 +132,9 @@ export const useSyncedBackgrounds = () => {
 
   useEffect(() => {
     const fetchManifests = async () => {
-      const [videoResult, imageResult] = await Promise.allSettled([
+      const [videoResult, mobileResult] = await Promise.allSettled([
         loadVideoManifest(),
-        loadImageManifest(),
+        loadMobileManifest(),
       ]);
 
       if (videoResult.status === 'fulfilled') {
@@ -99,13 +147,23 @@ export const useSyncedBackgrounds = () => {
         setVideoSrc(FALLBACK_VIDEO);
       }
 
-      if (imageResult.status === 'fulfilled') {
-        imagesRef.current = imageResult.value;
-        selectNextImage();
+      if (mobileResult.status === 'fulfilled') {
+        mobileVideosRef.current = mobileResult.value.videos;
+        imagesRef.current = mobileResult.value.images;
+
+        if (mobileVideosRef.current.length > 0) {
+          selectNextMobileVideo();
+        } else if (imagesRef.current.length > 0) {
+          selectNextImage();
+          setMobileVideoSrc(null);
+        }
       } else {
-        console.error('Failed to load image manifest:', imageResult.reason);
+        console.error('Failed to load mobile manifest:', mobileResult.reason);
+        mobileVideosRef.current = [];
         imagesRef.current = [FALLBACK_IMAGE];
         lastImageRef.current = FALLBACK_IMAGE;
+        setMobileVideoSrc(null);
+        setMobilePosterSrc(FALLBACK_IMAGE);
         setMobileImageSrc(FALLBACK_IMAGE);
       }
 
@@ -129,12 +187,14 @@ export const useSyncedBackgrounds = () => {
       selectNextVideo();
     }
 
-    if (imagesRef.current.length > 0) {
+    if (mobileVideosRef.current.length > 0) {
+      selectNextMobileVideo();
+    } else if (imagesRef.current.length > 0) {
       selectNextImage();
     }
 
     prevTrackKeyRef.current = currentTrackKey;
   }, [currentTrackKey, isLoading]);
 
-  return { videoSrc, mobileImageSrc, isLoading };
+  return { videoSrc, mobileVideoSrc, mobilePosterSrc, mobileImageSrc, isLoading };
 };

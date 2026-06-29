@@ -16,6 +16,8 @@ interface HeroBackgroundProps {
 
 interface HeroBackgroundInnerProps extends Omit<HeroBackgroundProps, 'syncWithAudio'> {
   activeVideoSrc: string;
+  activeMobileVideoSrc?: string | null;
+  activeMobilePosterSrc?: string;
   activeMobileImageSrc?: string;
 }
 
@@ -24,35 +26,56 @@ const HeroBackgroundInner = ({
   children,
   mobileBackgroundImage = '/placeholder.svg',
   activeVideoSrc,
+  activeMobileVideoSrc,
+  activeMobilePosterSrc,
   activeMobileImageSrc,
   videoWebmSrc,
   overlayColor = 'rgba(173,216,230,0.25)',
 }: HeroBackgroundInnerProps) => {
   const [isVisible, setIsVisible] = useState(false);
-  const [hasVideoError, setHasVideoError] = useState(false);
+  const [hasDesktopVideoError, setHasDesktopVideoError] = useState(false);
+  const [hasMobileVideoError, setHasMobileVideoError] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [isPoweringOn, setIsPoweringOn] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const desktopVideoRef = useRef<HTMLVideoElement>(null);
+  const mobileVideoRef = useRef<HTMLVideoElement>(null);
 
-  const tryPlay = useCallback(() => {
-    const video = videoRef.current;
-    if (!video || hasVideoError) return;
+  const resolvedMobileImage = activeMobileImageSrc ?? mobileBackgroundImage;
+  const resolvedMobilePoster = activeMobilePosterSrc ?? resolvedMobileImage;
+
+  const showMobileVideo =
+    Boolean(activeMobileVideoSrc) && !hasMobileVideoError && !prefersReducedMotion;
+
+  const tryPlayVideo = useCallback((video: HTMLVideoElement | null) => {
+    if (!video) return;
     if (document.hidden) return;
-
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) return;
 
     if (video.paused) {
       video.play().catch(() => {});
     }
-  }, [hasVideoError]);
+  }, [prefersReducedMotion]);
 
-  const handleVideoLoaded = useCallback(() => {
-    tryPlay();
-  }, [tryPlay]);
+  const tryPlayAllVideos = useCallback(() => {
+    tryPlayVideo(desktopVideoRef.current);
+    tryPlayVideo(mobileVideoRef.current);
+  }, [tryPlayVideo]);
 
-  const handleVideoError = useCallback(() => {
-    setHasVideoError(true);
+  const handleDesktopVideoLoaded = useCallback(() => {
+    tryPlayVideo(desktopVideoRef.current);
+  }, [tryPlayVideo]);
+
+  const handleMobileVideoLoaded = useCallback(() => {
+    tryPlayVideo(mobileVideoRef.current);
+  }, [tryPlayVideo]);
+
+  const handleDesktopVideoError = useCallback(() => {
+    setHasDesktopVideoError(true);
+  }, []);
+
+  const handleMobileVideoError = useCallback(() => {
+    setHasMobileVideoError(true);
   }, []);
 
   useEffect(() => {
@@ -61,8 +84,10 @@ const HeroBackgroundInner = ({
 
     setIsVisible(true);
 
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setPrefersReducedMotion(reducedMotion);
+
+    if (reducedMotion) {
       setIsPoweringOn(false);
     }
 
@@ -76,36 +101,52 @@ const HeroBackgroundInner = ({
   }, []);
 
   useEffect(() => {
-    setHasVideoError(false);
+    setHasDesktopVideoError(false);
   }, [activeVideoSrc]);
+
+  useEffect(() => {
+    setHasMobileVideoError(false);
+  }, [activeMobileVideoSrc]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        videoRef.current?.pause();
+        desktopVideoRef.current?.pause();
+        mobileVideoRef.current?.pause();
       } else {
-        tryPlay();
+        tryPlayAllVideos();
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [tryPlay]);
+  }, [tryPlayAllVideos]);
 
   const handleMouseEnter = useCallback(() => {
-    if (videoRef.current) {
-      videoRef.current.style.filter = 'brightness(1.1) contrast(1.05)';
+    if (desktopVideoRef.current) {
+      desktopVideoRef.current.style.filter = 'brightness(1.1) contrast(1.05)';
     }
   }, []);
 
   const handleMouseLeave = useCallback(() => {
-    if (videoRef.current) {
-      videoRef.current.style.filter = 'brightness(1) contrast(1)';
+    if (desktopVideoRef.current) {
+      desktopVideoRef.current.style.filter = 'brightness(1) contrast(1)';
     }
   }, []);
 
-  const showVideoFallback = hasVideoError;
-  const resolvedMobileImage = activeMobileImageSrc ?? mobileBackgroundImage;
+  const showStaticOnMobile = !showMobileVideo;
+  const showStaticOnDesktop = hasDesktopVideoError;
+
+  const staticBackgroundClass = cn(
+    'absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-opacity duration-700 ease-in-out',
+    showStaticOnMobile && showStaticOnDesktop
+      ? 'block'
+      : showStaticOnMobile
+        ? 'block md:hidden'
+        : showStaticOnDesktop
+          ? 'hidden md:block'
+          : 'hidden'
+  );
 
   return (
     <div
@@ -118,27 +159,45 @@ const HeroBackgroundInner = ({
     >
       <div className="crt-jitter absolute inset-0 w-full h-full" aria-hidden="true">
         <div
-          className={cn(
-            'absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-opacity duration-700 ease-in-out',
-            showVideoFallback ? 'block' : 'md:hidden'
-          )}
-          style={{ backgroundImage: `url(${resolvedMobileImage})` }}
+          className={staticBackgroundClass}
+          style={{
+            backgroundImage: `url(${showStaticOnMobile ? resolvedMobileImage : resolvedMobilePoster})`,
+          }}
           role="img"
           aria-label="Background image"
         />
 
-        {!showVideoFallback && (
+        {showMobileVideo && activeMobileVideoSrc && (
+          <video
+            key={activeMobileVideoSrc}
+            ref={mobileVideoRef}
+            className="absolute inset-0 w-full h-full object-cover block md:hidden transition-[filter] duration-700 ease-in-out"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster={resolvedMobilePoster}
+            onLoadedData={handleMobileVideoLoaded}
+            onError={handleMobileVideoError}
+            aria-hidden="true"
+          >
+            <source src={activeMobileVideoSrc} type="video/mp4" />
+          </video>
+        )}
+
+        {!hasDesktopVideoError && (
           <video
             key={activeVideoSrc}
-            ref={videoRef}
+            ref={desktopVideoRef}
             className="absolute inset-0 w-full h-full object-cover hidden md:block transition-[filter] duration-700 ease-in-out"
             autoPlay
             muted
             loop
             playsInline
-            preload="auto"
-            onLoadedData={handleVideoLoaded}
-            onError={handleVideoError}
+            preload="metadata"
+            onLoadedData={handleDesktopVideoLoaded}
+            onError={handleDesktopVideoError}
             aria-hidden="true"
           >
             {videoWebmSrc && <source src={videoWebmSrc} type="video/webm" />}
@@ -202,12 +261,14 @@ const HeroBackgroundInner = ({
 };
 
 const SyncedHeroBackground = (props: Omit<HeroBackgroundProps, 'syncWithAudio' | 'videoSrc'>) => {
-  const { videoSrc, mobileImageSrc } = useSyncedBackgrounds();
+  const { videoSrc, mobileVideoSrc, mobilePosterSrc, mobileImageSrc } = useSyncedBackgrounds();
 
   return (
     <HeroBackgroundInner
       {...props}
       activeVideoSrc={videoSrc}
+      activeMobileVideoSrc={mobileVideoSrc}
+      activeMobilePosterSrc={mobilePosterSrc}
       activeMobileImageSrc={mobileImageSrc}
     />
   );
