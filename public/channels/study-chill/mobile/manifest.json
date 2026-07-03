@@ -1,0 +1,24 @@
+{
+  "videos": [
+    {
+      "id": "mb1",
+      "src": "/channels/study-chill/mobile/mb1.mp4",
+      "poster": "/channels/study-chill/mobile/mb1.jpg"
+    },
+    {
+      "id": "mb2",
+      "src": "/channels/study-chill/mobile/mb2.mp4",
+      "poster": "/channels/study-chill/mobile/mb2.jpg"
+    },
+    {
+      "id": "mb3",
+      "src": "/channels/study-chill/mobile/mb3.mp4",
+      "poster": "/channels/study-chill/mobile/mb3.jpg"
+    }
+  ],
+  "images": [
+    { "id": "mb1", "src": "/channels/study-chill/mobile/mb1.jpg" },
+    { "id": "mb2", "src": "/channels/study-chill/mobile/mb2.jpg" },
+    { "id": "mb3", "src": "/channels/study-chill/mobile/mb3.jpg" }
+  ]
+}

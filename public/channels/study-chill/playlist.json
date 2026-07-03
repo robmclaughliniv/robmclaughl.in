@@ -3,37 +3,37 @@
     {
       "id": "track-01",
       "title": "Late Night Debugging",
-      "src": "/audio/track-01.mp3"
+      "src": "/channels/study-chill/audio/track-01.mp3"
     },
     {
       "id": "track-02",
       "title": "Merge Conflict Blues",
-      "src": "/audio/track-02.mp3"
+      "src": "/channels/study-chill/audio/track-02.mp3"
     },
     {
       "id": "track-03",
       "title": "Deploy Friday Chill",
-      "src": "/audio/track-03.mp3"
+      "src": "/channels/study-chill/audio/track-03.mp3"
     },
     {
       "id": "track-04",
       "title": "404 Serenity",
-      "src": "/audio/track-04.mp3"
+      "src": "/channels/study-chill/audio/track-04.mp3"
     },
     {
       "id": "track-05",
       "title": "Refactor Rain",
-      "src": "/audio/track-05.mp3"
+      "src": "/channels/study-chill/audio/track-05.mp3"
     },
     {
       "id": "track-06",
       "title": "Digital Ocean Rain",
-      "src": "/audio/track-06.mp3"
+      "src": "/channels/study-chill/audio/track-06.mp3"
     },
     {
       "id": "track-07",
       "title": "Serene Calm",
-      "src": "/audio/track-07.mp3"
+      "src": "/channels/study-chill/audio/track-07.mp3"
     }
   ]
 }

@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
+import { useChannelContext } from '@/components/channels/ChannelContext';
 import { AudioPlayerContext } from './AudioPlayerContext';
 
 interface AudioPlayerProviderProps {
@@ -9,7 +10,9 @@ interface AudioPlayerProviderProps {
 }
 
 export const AudioPlayerProvider = ({ children }: AudioPlayerProviderProps) => {
-  const player = useAudioPlayer();
+  const { currentChannel, isLoading: isChannelsLoading } = useChannelContext();
+  const playlistUrl = currentChannel?.assets.playlist ?? null;
+  const player = useAudioPlayer(isChannelsLoading ? null : playlistUrl);
 
   const value = useMemo(
     () => player,

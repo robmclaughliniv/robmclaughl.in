@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "defaultChannelId": "study-chill",
+  "channels": [
+    {
+      "id": "study-chill",
+      "number": 1,
+      "name": "Study Chill",
+      "description": "Lo-fi beats for focused work",
+      "theme": {
+        "overlayColor": "rgba(13, 16, 45, 0.5)",
+        "accent": "322 100% 70%"
+      },
+      "assets": {
+        "playlist": "/channels/study-chill/playlist.json",
+        "desktopVideos": "/channels/study-chill/videos/manifest.json",
+        "mobileBackgrounds": "/channels/study-chill/mobile/manifest.json"
+      }
+    }
+  ]
+}

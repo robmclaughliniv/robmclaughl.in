@@ -7,11 +7,8 @@ import { HeroBackground } from "@/components/HeroBackground"
 export default function Home() {
   return (
     <main id="main-content" className="crt-flicker relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-      <HeroBackground
-        syncWithAudio
-        overlayColor="rgba(13, 16, 45, 0.5)"
-      >
-        <div className="relative z-10 flex flex-col items-center justify-center max-w-2xl mx-auto text-center h-full my-auto drop-shadow-2xl">
+      <HeroBackground syncWithAudio>
+        <div className="relative z-10 flex flex-col items-center justify-center max-w-2xl mx-auto text-center h-full my-auto">
           <div className="absolute -bottom-16 -right-16 w-48 h-12 animate-pulse-slow hidden md:block" aria-hidden="true">
             <Waveform className="w-full h-full text-accent/20" />
           </div>
@@ -38,7 +35,7 @@ export default function Home() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-[color,background-color] duration-300 icon-glow shadow-lg"
+                      className="box-flicker ui-lift-sm size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-[color,background-color] duration-300 icon-glow"
                       aria-label="GitHub"
                       asChild
                     >
@@ -60,7 +57,7 @@ export default function Home() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-[color,background-color] duration-300 icon-glow shadow-lg"
+                      className="box-flicker ui-lift-sm size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-[color,background-color] duration-300 icon-glow"
                       aria-label="LinkedIn"
                       asChild
                     >
@@ -82,7 +79,7 @@ export default function Home() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-[color,background-color] duration-300 icon-glow shadow-lg"
+                      className="box-flicker ui-lift-sm size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-[color,background-color] duration-300 icon-glow"
                       aria-label="Email"
                       asChild
                     >
@@ -104,7 +101,7 @@ export default function Home() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="box-flicker size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-[color,background-color] duration-300 icon-glow shadow-lg"
+                      className="box-flicker ui-lift-sm size-14 rounded-full bg-secondary/50 text-muted-foreground hover:text-accent hover:bg-secondary transition-[color,background-color] duration-300 icon-glow"
                       aria-label="Resume"
                       asChild
                     >
@@ -123,7 +120,7 @@ export default function Home() {
           </TooltipProvider>
 
           {/* Bio section */}
-          <div className="box-flicker bg-card/50 backdrop-blur-sm p-6 rounded-lg border border-border mb-12 max-w-md shadow-xl">
+          <div className="box-flicker ui-lift bg-card/50 backdrop-blur-sm p-6 rounded-lg border border-border mb-12 max-w-md">
             <p className="text-muted-foreground leading-relaxed font-medium">
               Engineer, problem-solver, and dad.<br />Based in Austin, TX.
             </p>

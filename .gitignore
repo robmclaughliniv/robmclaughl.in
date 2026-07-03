@@ -26,3 +26,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# channel media binaries (uploaded to S3 separately)
+public/channels/**/audio/*.mp3
+public/channels/**/videos/*.mp4
+public/channels/**/mobile/*.mp4
+public/channels/**/mobile/*.jpg

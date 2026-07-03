@@ -4,7 +4,8 @@
 
 ## Current Focus
 
-*   **Primary:** Debug the GitHub Actions trigger (`on.delete`) for the `cleanup-backend-preview` job in `deploy-backend.yml` to ensure backend preview resources are automatically destroyed when their corresponding branch is deleted.
+*   **Primary:** Site-wide TV channel system — each channel bundles music, visuals, and theme tokens under `public/channels/`.
+*   **Channel 1:** "Study Chill" — migrated legacy audio/video assets into channel-scoped folders.
 *   **Secondary:** Integrate the backend API (`POST /contact`) with the frontend application.
 *   **Tertiary:** Baseline Testing: Implement basic functional UI tests using Cypress.
 *   **(Recently Completed):** Successfully resolved production `terraform apply` failures in `deploy-backend.yml`.

@@ -1,0 +1,10 @@
+{
+  "videos": [
+    { "id": "sand", "src": "/channels/study-chill/videos/bg-sand.mp4" },
+    { "id": "lofi_edit", "src": "/channels/study-chill/videos/lofi_edit.mp4" },
+    { "id": "lofi_edit2", "src": "/channels/study-chill/videos/lofi_edit2.mp4" },
+    { "id": "lofi_edit3", "src": "/channels/study-chill/videos/lofi_edit3.mp4" },
+    { "id": "lofi_edit4", "src": "/channels/study-chill/videos/lofi_edit4.mp4" },
+    { "id": "lofi_edit5", "src": "/channels/study-chill/videos/lofi_edit5.mp4" }
+  ]
+}

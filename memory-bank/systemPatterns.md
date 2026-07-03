@@ -77,6 +77,7 @@ graph TD
 ## Data Management (MVP)
 
 *   **Storage:** All website content is static (HTML, CSS, JS, images/videos) stored as files in an AWS S3 bucket.
+*   **Channel media:** Organized under `public/channels/{channel-id}/` with a master `manifest.json`. JSON manifests deploy via CI; large binaries (MP3, MP4) are uploaded to S3 separately and excluded from deploy sync delete. See `docs/CHANNELS.md`.
 *   **Access:** Files are accessed publicly via the AWS CloudFront CDN. Direct S3 access is restricted using OAC.
 *   **Caching:** CloudFront provides edge caching for performance. Cache invalidation is triggered on deployment.
 *   **Database:** No database is used in the MVP.

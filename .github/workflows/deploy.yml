@@ -64,7 +64,12 @@ jobs:
           mask-aws-account-id: 'no'
 
       - name: Deploy Production to S3
-        run: aws s3 sync ./out s3://${{ secrets.AWS_S3_BUCKET_NAME }} --delete
+        run: |
+          aws s3 sync ./out s3://${{ secrets.AWS_S3_BUCKET_NAME }} --delete \
+            --exclude "channels/*/audio/*" \
+            --exclude "channels/*/videos/*.mp4" \
+            --exclude "channels/*/mobile/*.mp4" \
+            --exclude "channels/*/mobile/*.jpg"
 
       - name: Invalidate Production CloudFront
         run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*" # Use Repository Secret
@@ -130,7 +135,12 @@ jobs:
           mask-aws-account-id: 'no'
 
       - name: Deploy Preview to S3
-        run: aws s3 sync ./out s3://${{ secrets.AWS_S3_BUCKET_NAME }}/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}/ --delete # Use Repository Secret
+        run: |
+          aws s3 sync ./out s3://${{ secrets.AWS_S3_BUCKET_NAME }}/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}/ --delete \
+            --exclude "channels/*/audio/*" \
+            --exclude "channels/*/videos/*.mp4" \
+            --exclude "channels/*/mobile/*.mp4" \
+            --exclude "channels/*/mobile/*.jpg"
 
       - name: Invalidate Preview CloudFront
         run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}/*" # Use Repository Secret

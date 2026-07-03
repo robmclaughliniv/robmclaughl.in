@@ -1,5 +1,3 @@
-import Link from "next/link"
-
 export default function NotFound() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
@@ -9,12 +7,12 @@ export default function NotFound() {
       <p className="text-lg font-mono text-muted-foreground mb-8">
         This page doesn&apos;t exist.
       </p>
-      <Link
+      <a
         href="/"
         className="px-6 py-3 rounded-lg bg-secondary/50 border border-border font-mono text-sm text-muted-foreground hover:text-accent hover:border-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-colors duration-300"
       >
         Go home
-      </Link>
+      </a>
     </main>
   )
 }

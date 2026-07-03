@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAudioPlayerContext } from '@/components/audio-player/AudioPlayerContext';
+import { useChannelContext } from '@/components/channels/ChannelContext';
 
-const VIDEO_MANIFEST_URL = '/videos/manifest.json';
-const MOBILE_MANIFEST_URL = '/mobile_backgrounds/manifest.json';
-const FALLBACK_VIDEO = '/videos/bg-sand.mp4';
-const FALLBACK_IMAGE = '/placeholder.svg';
+const FALLBACK_VIDEO = '/channels/study-chill/videos/bg-sand.mp4';
+const FALLBACK_IMAGE = '/placeholder.jpg';
 
 interface MediaEntry {
   id: string;
@@ -44,8 +43,8 @@ export const pickRandomItem = (items: string[], fallback: string, exclude?: stri
 export const pickRandomVideo = (videos: string[], exclude?: string): string =>
   pickRandomItem(videos, FALLBACK_VIDEO, exclude);
 
-const loadVideoManifest = async (): Promise<string[]> => {
-  const response = await fetch(VIDEO_MANIFEST_URL);
+const loadVideoManifest = async (manifestUrl: string): Promise<string[]> => {
+  const response = await fetch(manifestUrl);
   if (!response.ok) throw new Error(`Video manifest HTTP ${response.status}`);
 
   const data: VideoManifest = await response.json();
@@ -54,11 +53,13 @@ const loadVideoManifest = async (): Promise<string[]> => {
   return data.videos.map((video) => video.src);
 };
 
-const loadMobileManifest = async (): Promise<{
+const loadMobileManifest = async (
+  manifestUrl: string
+): Promise<{
   videos: MobileBackgroundEntry[];
   images: string[];
 }> => {
-  const response = await fetch(MOBILE_MANIFEST_URL);
+  const response = await fetch(manifestUrl);
   if (!response.ok) throw new Error(`Mobile manifest HTTP ${response.status}`);
 
   const data: MobileManifest = await response.json();
@@ -82,6 +83,7 @@ const loadMobileManifest = async (): Promise<{
 
 export const useSyncedBackgrounds = () => {
   const { currentTrackIndex, tracks } = useAudioPlayerContext();
+  const { currentChannel } = useChannelContext();
   const [videoSrc, setVideoSrc] = useState(FALLBACK_VIDEO);
   const [mobileVideoSrc, setMobileVideoSrc] = useState<string | null>(null);
   const [mobilePosterSrc, setMobilePosterSrc] = useState(FALLBACK_IMAGE);
@@ -130,12 +132,25 @@ export const useSyncedBackgrounds = () => {
       ? `${currentTrackIndex}:${tracks[currentTrackIndex]?.id ?? 'unknown'}`
       : null;
 
+  const channelId = currentChannel?.id ?? null;
+  const desktopManifestUrl = currentChannel?.assets.desktopVideos ?? null;
+  const mobileManifestUrl = currentChannel?.assets.mobileBackgrounds ?? null;
+
   useEffect(() => {
+    if (!desktopManifestUrl || !mobileManifestUrl) return;
+
+    let cancelled = false;
+
     const fetchManifests = async () => {
+      setIsLoading(true);
+      prevTrackKeyRef.current = null;
+
       const [videoResult, mobileResult] = await Promise.allSettled([
-        loadVideoManifest(),
-        loadMobileManifest(),
+        loadVideoManifest(desktopManifestUrl),
+        loadMobileManifest(mobileManifestUrl),
       ]);
+
+      if (cancelled) return;
 
       if (videoResult.status === 'fulfilled') {
         videosRef.current = videoResult.value;
@@ -171,7 +186,11 @@ export const useSyncedBackgrounds = () => {
     };
 
     void fetchManifests();
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [channelId, desktopManifestUrl, mobileManifestUrl]);
 
   useEffect(() => {
     if (isLoading || !currentTrackKey) return;

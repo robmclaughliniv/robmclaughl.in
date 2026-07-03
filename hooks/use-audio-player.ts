@@ -39,9 +39,9 @@ export type UseAudioPlayerReturn = AudioPlayerState &
     analyserRef: React.RefObject<AnalyserNode | null>;
   };
 
-const PLAYLIST_URL = '/audio/playlist.json';
 const DEFAULT_VOLUME = 0.5;
 const MOBILE_BREAKPOINT = 768;
+const CHANNEL_FADE_SEC = 0.25;
 
 const getInitialCollapsed = (): boolean => {
   if (typeof window === 'undefined') return false;
@@ -82,13 +82,16 @@ const createAudioElement = (): HTMLAudioElement => {
   return audio;
 };
 
-export const useAudioPlayer = (): UseAudioPlayerReturn => {
+export const useAudioPlayer = (playlistUrl: string | null): UseAudioPlayerReturn => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   if (audioRef.current === null && typeof window !== 'undefined') {
     audioRef.current = createAudioElement();
   }
   const volumeBeforeMute = useRef(DEFAULT_VOLUME);
   const interactionRetryRegistered = useRef(false);
+  const isMutedRef = useRef(true);
+  const volumeRef = useRef(DEFAULT_VOLUME);
+  const prevPlaylistUrlRef = useRef<string | null>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
@@ -99,7 +102,10 @@ export const useAudioPlayer = (): UseAudioPlayerReturn => {
   const [isCollapsed, setIsCollapsed] = useState(getInitialCollapsed);
   const [hasError, setHasError] = useState(false);
 
-  const { analyserRef, resumeAudioContext, ensureGraphReady } = useAudioAnalyser({
+  isMutedRef.current = isMuted;
+  volumeRef.current = volume;
+
+  const { analyserRef, resumeAudioContext, ensureGraphReady, fadeGain } = useAudioAnalyser({
     audioRef,
     isMuted,
     volume,
@@ -149,28 +155,59 @@ export const useAudioPlayer = (): UseAudioPlayerReturn => {
     };
   }, []);
 
-  // Fetch playlist on mount
   useEffect(() => {
+    if (!playlistUrl) return;
+
+    let cancelled = false;
+
     const fetchPlaylist = async () => {
+      const isChannelSwitch =
+        prevPlaylistUrlRef.current !== null && prevPlaylistUrlRef.current !== playlistUrl;
+      prevPlaylistUrlRef.current = playlistUrl;
+
+      setIsLoading(true);
+
+      const audio = audioRef.current;
+      if (isChannelSwitch && audio) {
+        await fadeGain(0, CHANNEL_FADE_SEC);
+        audio.pause();
+        setIsPlaying(false);
+      }
+
       try {
-        const response = await fetch(PLAYLIST_URL);
+        const response = await fetch(playlistUrl);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const data: Playlist = await response.json();
         if (!data.tracks?.length) throw new Error('Empty playlist');
 
+        if (cancelled) return;
+
         setTracks(shuffleTracks(data.tracks));
+        setCurrentTrackIndex(0);
         setHasError(false);
+
+        if (isChannelSwitch) {
+          const targetGain = isMutedRef.current ? 0 : volumeRef.current;
+          await fadeGain(targetGain, CHANNEL_FADE_SEC);
+        }
       } catch (error) {
         console.error('Failed to load playlist:', error);
-        setHasError(true);
+        if (!cancelled) {
+          setHasError(true);
+          setTracks([]);
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
-    fetchPlaylist();
-  }, []);
+    void fetchPlaylist();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [playlistUrl, fadeGain]);
 
   // Load and play track when tracks load or index changes
   useEffect(() => {

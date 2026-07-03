@@ -187,7 +187,7 @@ graph TD
 
 ## Data Management (MVP + Backend)
 
-*   **Frontend Storage:** Static assets (HTML, CSS, JS) in AWS S3, accessed via CloudFront.
+*   **Frontend Storage:** Static assets (HTML, CSS, JS) in AWS S3, accessed via CloudFront. Channel media organized under `public/channels/{id}/` with master `manifest.json`; JSON deploys via CI, binaries uploaded to S3 separately (see `docs/CHANNELS.md`).
 *   **Backend Storage:** Data posted via API Gateway is stored in AWS DynamoDB table (`robmclaughlin-{env}`).
     *   Managed via Terraform.
     *   Accessed by the Lambda function using AWS SDK.

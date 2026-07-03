@@ -12,6 +12,7 @@ interface UseAudioAnalyserReturn {
   analyserRef: React.RefObject<AnalyserNode | null>;
   resumeAudioContext: () => Promise<void>;
   ensureGraphReady: () => boolean;
+  fadeGain: (targetVolume: number, durationSec?: number) => Promise<void>;
 }
 
 interface AudioGraph {
@@ -91,9 +92,28 @@ export const useAudioAnalyser = ({
     }
   }, [audioRef]);
 
+  const fadeGain = useCallback(
+    (targetVolume: number, durationSec = 0.3): Promise<void> =>
+      new Promise((resolve) => {
+        const gain = gainNodeRef.current;
+        const ctx = audioContextRef.current;
+        if (!gain || !ctx) {
+          resolve();
+          return;
+        }
+
+        const now = ctx.currentTime;
+        gain.gain.cancelScheduledValues(now);
+        gain.gain.setValueAtTime(gain.gain.value, now);
+        gain.gain.linearRampToValueAtTime(targetVolume, now + durationSec);
+        window.setTimeout(resolve, durationSec * 1000 + 20);
+      }),
+    []
+  );
+
   useEffect(() => {
     ensureGraphReady();
   }, [ensureGraphReady]);
 
-  return { analyserRef, resumeAudioContext, ensureGraphReady };
+  return { analyserRef, resumeAudioContext, ensureGraphReady, fadeGain };
 };

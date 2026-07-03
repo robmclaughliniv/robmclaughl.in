@@ -18,6 +18,8 @@
     *   Lo-fi themed UI with TailwindCSS and shadcn/ui.
     *   Responsive layout.
     *   Custom components: `CoffeeCup`, `Waveform`, `HeroBackground` (with video/image background, effects, optimizations).
+    *   Site-wide TV channel system: `ChannelProvider`, manifest at `public/channels/manifest.json`, channel 1 "Study Chill".
+    *   Audio player with channel-aware playlists, synced backgrounds, channel up/down controls.
     *   Social links implemented.
 *   **Infrastructure & Deployment:**
     *   Terraform scripts for AWS resources (S3, CloudFront, Route53, ACM, IAM Role) successfully provisioned infrastructure.

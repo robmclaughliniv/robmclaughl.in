@@ -90,7 +90,7 @@
   inset: 0;
   z-index: 30;
   background-image:
-    linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.26) 50%),
+    linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.32) 50%),
     linear-gradient(
       90deg,
       rgba(255, 0, 0, 0.07),
@@ -128,6 +128,40 @@
     rgba(255, 255, 255, 0.07) 0%,
     rgba(255, 255, 255, 0) 42%
   );
+}
+
+/* Persistent animated TV grain — always-on static crawl */
+.crt-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0.15;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grainNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grainNoise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 120px 120px;
+  mix-blend-mode: soft-light;
+  animation:
+    crt-grain-snow 0.25s steps(3) infinite,
+    crt-grain-pulse 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes crt-grain-snow {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 90px 50px;
+  }
+}
+
+@keyframes crt-grain-pulse {
+  0% {
+    opacity: 0.12;
+  }
+  100% {
+    opacity: 0.18;
+  }
 }
 
 /* Animations */
@@ -365,6 +399,8 @@
 /* Neon text effect — uses filter so it doesn't conflict with text-flicker's text-shadow animation */
 .neon-text {
   filter:
+    drop-shadow(0 2px 8px rgba(0, 0, 0, 0.65))
+    drop-shadow(0 8px 24px rgba(0, 0, 0, 0.5))
     drop-shadow(0 0 5px rgba(255, 102, 199, 0.5))
     drop-shadow(0 0 10px rgba(255, 102, 199, 0.4))
     drop-shadow(0 0 15px rgba(255, 102, 199, 0.3))
@@ -376,8 +412,24 @@
   filter:
     drop-shadow(0.4px 0 0 rgba(0, 30, 255, 0.3))
     drop-shadow(-0.4px 0 0 rgba(255, 0, 80, 0.2))
-    drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
+    drop-shadow(0 0 2px rgba(0, 0, 0, 0.4))
+    drop-shadow(0 4px 12px rgba(0, 0, 0, 0.55))
+    drop-shadow(0 12px 28px rgba(0, 0, 0, 0.4));
   will-change: auto;
+}
+
+/* Depth lift for UI surfaces — box-shadow avoids filter conflicts */
+.ui-lift {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.45),
+    0 8px 20px rgba(0, 0, 0, 0.5),
+    0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.ui-lift-sm {
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.5),
+    0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 /* Static sub-pixel phosphor convergence drift */
@@ -385,7 +437,9 @@
   text-shadow:
     0.4px 0 0 rgba(0, 30, 255, 0.45),
     -0.4px 0 0 rgba(255, 0, 80, 0.3),
-    0 0 2px rgba(255, 255, 255, 0.15);
+    0 0 2px rgba(255, 255, 255, 0.15),
+    0 2px 8px rgba(0, 0, 0, 0.6),
+    0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
 /* Glow effect for hover states */
@@ -399,17 +453,37 @@
 }
 
 .icon-glow:hover {
-  filter: drop-shadow(0 0 5px rgba(255, 102, 199, 0.8)) drop-shadow(0 0 10px rgba(255, 102, 199, 0.5));
+  filter:
+    drop-shadow(0.4px 0 0 rgba(0, 30, 255, 0.3))
+    drop-shadow(-0.4px 0 0 rgba(255, 0, 80, 0.2))
+    drop-shadow(0 0 2px rgba(0, 0, 0, 0.4))
+    drop-shadow(0 4px 12px rgba(0, 0, 0, 0.55))
+    drop-shadow(0 12px 28px rgba(0, 0, 0, 0.4))
+    drop-shadow(0 0 5px rgba(255, 102, 199, 0.8))
+    drop-shadow(0 0 10px rgba(255, 102, 199, 0.5));
   transform: scale(1.05);
 }
 
-/* Audio player — pixel retro frame */
+/* Audio player — pixel retro frame + depth lift (single box-shadow stack) */
 .player-pixel-border {
   box-shadow:
     0 0 0 2px hsl(var(--background)),
     0 0 0 4px hsl(var(--border)),
     0 0 0 6px hsl(var(--background)),
-    0 0 0 8px hsl(var(--accent) / 0.35);
+    0 0 0 8px hsl(var(--accent) / 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.45),
+    0 8px 20px rgba(0, 0, 0, 0.5),
+    0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.player-pixel-border-sm {
+  box-shadow:
+    0 0 0 2px hsl(var(--background)),
+    0 0 0 4px hsl(var(--border)),
+    0 0 0 6px hsl(var(--background)),
+    0 0 0 8px hsl(var(--accent) / 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.5),
+    0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 /* Audio player button — pixel hover outline */
@@ -476,6 +550,11 @@
   }
 
   .crt-static-bar {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+
+  .crt-grain {
     animation: none !important;
     opacity: 0 !important;
   }

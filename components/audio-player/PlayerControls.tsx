@@ -7,6 +7,7 @@ import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PixelWaveform } from '@/components/audio-player/PixelWaveform';
+import { ChannelControls } from '@/components/channels/ChannelControls';
 import type { UseAudioPlayerReturn } from '@/hooks/use-audio-player';
 
 interface PlayerControlsProps {
@@ -82,6 +83,10 @@ export const PlayerControls = ({ player, className }: PlayerControlsProps) => {
 
       {/* Playback controls */}
       <div className="flex items-center gap-1">
+        <ChannelControls />
+
+        <div className="mx-1 h-5 w-px bg-border" aria-hidden="true" />
+
         <Button
           variant="ghost"
           size="icon"

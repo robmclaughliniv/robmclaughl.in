@@ -4,16 +4,15 @@
 
 ## Current Focus
 
-*   **Primary:** Polishing the homepage UI to achieve a retro-futuristic CRT monitor aesthetic.
-*   **Long-term Vision:** Evolve the page into a "lofi vibe generator" inspired by lofi.cafe, featuring:
-    *   An integrated audio player.
-    *   AI-driven visuals.
-    *   Clickable "channels" to change music and visuals.
-    *   Links/elements connecting to subdomains showcasing web experiments.
+*   **Primary:** Site-wide TV channel system — each channel bundles music, visuals, and theme.
+*   **Channel 1:** "Study Chill" (`public/channels/study-chill/`) — migrated from legacy `/audio/` and `/videos/` paths.
+*   **Long-term Vision:** Add more channels with distinct vibes; optional `/vibe` route and AI-driven visuals.
 
 ## Recent Changes (Since March 23, 2025)
 
-*   Successful initial deployment of the site to `robmclaughl.in`.
+*   Implemented TV channel architecture: `ChannelProvider`, manifest-driven assets under `public/channels/`, channel up/down UI and keyboard shortcuts.
+*   Migrated audio, desktop videos, and mobile backgrounds into channel-scoped folders.
+*   Deploy workflow excludes channel binaries from S3 sync `--delete` to protect uploaded media.
 *   Refined the CRT visual effects applied to the background video component (`HeroBackground`).
 *   Implemented security improvements following post-launch security review.
 *   Fixed Terraform Route53 record management issue by correcting Zone ID and adding `allow_overwrite = true` parameter.

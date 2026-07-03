@@ -3,6 +3,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { useSyncedBackgrounds } from '@/hooks/use-synced-backgrounds';
+import { useChannelContext } from '@/components/channels/ChannelContext';
 
 interface HeroBackgroundProps {
   className?: string;
@@ -208,7 +209,7 @@ const HeroBackgroundInner = ({
 
       <div
         className={cn(
-          'absolute inset-0 z-[1] transition-opacity duration-1000 ease-in-out',
+          'absolute inset-0 z-[1] transition-[opacity,background-color] duration-1000 ease-in-out',
           isVisible ? 'opacity-100' : 'opacity-0'
         )}
         style={{ backgroundColor: overlayColor }}
@@ -217,13 +218,18 @@ const HeroBackgroundInner = ({
       <div
         className={cn(
           'absolute inset-0 z-[2] opacity-0 transition-opacity duration-1500 ease-in-out',
-          isVisible ? 'opacity-10' : 'opacity-0'
+          isVisible ? 'opacity-[0.14]' : 'opacity-0'
         )}
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
           backgroundRepeat: 'repeat',
           transitionDelay: '200ms',
         }}
+        aria-hidden="true"
+      />
+
+      <div
+        className={cn('crt-grain', !isVisible && 'opacity-0')}
         aria-hidden="true"
       />
 
@@ -260,12 +266,15 @@ const HeroBackgroundInner = ({
   );
 };
 
-const SyncedHeroBackground = (props: Omit<HeroBackgroundProps, 'syncWithAudio' | 'videoSrc'>) => {
+const SyncedHeroBackground = (props: Omit<HeroBackgroundProps, 'syncWithAudio' | 'videoSrc' | 'overlayColor'>) => {
   const { videoSrc, mobileVideoSrc, mobilePosterSrc, mobileImageSrc } = useSyncedBackgrounds();
+  const { currentChannel } = useChannelContext();
+  const overlayColor = currentChannel?.theme.overlayColor ?? 'rgba(13, 16, 45, 0.5)';
 
   return (
     <HeroBackgroundInner
       {...props}
+      overlayColor={overlayColor}
       activeVideoSrc={videoSrc}
       activeMobileVideoSrc={mobileVideoSrc}
       activeMobilePosterSrc={mobilePosterSrc}
@@ -276,7 +285,7 @@ const SyncedHeroBackground = (props: Omit<HeroBackgroundProps, 'syncWithAudio' |
 
 export function HeroBackground({
   syncWithAudio = false,
-  videoSrc = '/videos/bg-sand.mp4',
+  videoSrc = '/channels/study-chill/videos/bg-sand.mp4',
   ...props
 }: HeroBackgroundProps) {
   if (syncWithAudio) {

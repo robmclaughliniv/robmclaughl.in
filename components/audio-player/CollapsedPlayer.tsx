@@ -20,7 +20,7 @@ export const CollapsedPlayer = ({
       variant="ghost"
       size="icon"
       className={cn(
-        'player-pixel-border player-btn size-11 rounded-none bg-secondary/90 p-1',
+        'player-pixel-border-sm player-btn size-11 rounded-none bg-secondary/90 p-1',
         'flex flex-col items-center justify-center gap-0.5',
         'text-muted-foreground hover:text-accent',
         isPlaying && 'border-accent/60 shadow-[0_0_8px_rgba(255,102,199,0.4)]'
