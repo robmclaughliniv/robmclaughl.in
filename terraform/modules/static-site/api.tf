@@ -62,6 +62,8 @@ data "aws_iam_policy_document" "lambda_dynamodb" {
       "dynamodb:UpdateItem",
       "dynamodb:GetItem",
       "dynamodb:Query",
+      "dynamodb:Scan",
+      "dynamodb:DeleteItem",
       "dynamodb:BatchWriteItem",
     ]
     resources = [aws_dynamodb_table.api[0].arn]
