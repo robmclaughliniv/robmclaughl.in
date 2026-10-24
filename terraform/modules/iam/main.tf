@@ -1,7 +1,18 @@
+# Exact OIDC subjects for .github/workflows/deploy.yml (AWS_DEPLOY_ROLE_ARN).
+# A job environment replaces ref in sub. pull_request is a fixed subject.
+# delete runs as the default branch, so cleanup presents refs/heads/master.
+locals {
+  github_oidc_subjects = [
+    "repo:${var.github_owner}/${var.github_repo}:environment:prod",
+    "repo:${var.github_owner}/${var.github_repo}:pull_request",
+    "repo:${var.github_owner}/${var.github_repo}:ref:refs/heads/master",
+  ]
+}
+
 # IAM Role for GitHub Actions OIDC integration
 resource "aws_iam_role" "github_actions" {
   name = "github-actions-deploy-role"
-  
+
   # Trust policy that allows GitHub Actions to assume this role
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -15,10 +26,7 @@ resource "aws_iam_role" "github_actions" {
         Condition = {
           StringEquals = {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-          },
-          StringLike = {
-            # Restrict to specific repository
-            "token.actions.githubusercontent.com:sub" = "repo:${var.github_owner}/${var.github_repo}:*"
+            "token.actions.githubusercontent.com:sub" = local.github_oidc_subjects
           }
         }
       }
@@ -40,7 +48,7 @@ data "aws_iam_policy_document" "s3_deploy" {
     ]
     resources = [var.bucket_arn]
   }
-  
+
   # Allow uploading, downloading, and deleting objects in the bucket
   statement {
     sid    = "S3ObjectPermissions"

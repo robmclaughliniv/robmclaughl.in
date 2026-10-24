@@ -189,7 +189,8 @@ The design intentionally leaves room for, but this version does not implement:
 - **Promoting shared primitives to per-stack overrides** (e.g. a custom WAF or
   per-app logging bucket) beyond the existing `csp_override` escape hatch.
 - **Multi-region or non-`us-west-2`** deployments.
-- **Tightened OIDC subjects by default** (currently `repo:<repo>:*`; production
-  hardening would scope to specific branches).
+- **A single default-branch OIDC subject** (the module already trusts exact
+  `refs/heads/main` and `refs/heads/master` subjects; a later version could
+  trust only the repo's actual default branch).
 
 Note these to the user if relevant, but keep v1 focused on the PROD lifecycle.

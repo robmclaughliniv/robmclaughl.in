@@ -17,8 +17,6 @@ resource "aws_iam_role" "gha" {
         Condition = {
           StringEquals = {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-          }
-          StringLike = {
             "token.actions.githubusercontent.com:sub" = local.oidc_subjects
           }
         }
