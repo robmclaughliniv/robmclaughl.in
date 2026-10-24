@@ -19,21 +19,21 @@ permissions:
 
 jobs:
   deploy-backend-preview:
-    name: Deploy Backend (Preview/PR)
-    # Only run this job for pull request events
+    name: Plan Backend (Preview/PR)
+    # Only run this job for pull request events. Plan only: do not apply from a pull request.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Node.js and PNPM
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '20' # Match Lambda runtime or desired version
       - name: Setup PNPM
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.4.0
         with:
           version: 10 # Match local/required pnpm version
           run_install: false
@@ -45,7 +45,7 @@ jobs:
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
 
       - name: Setup pnpm cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -61,7 +61,7 @@ jobs:
         working-directory: ./lambda_src
 
       - name: Configure AWS Credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           # You need to create an IAM role that Terraform can assume
           # and store its ARN in a GitHub secret named TERRAFORM_AWS_IAM_ROLE_ARN.
@@ -81,7 +81,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION || 'us-west-2' }} # Use repo variable or default
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_version: ~1.8 # Use your desired Terraform version constraint
 
@@ -94,21 +94,24 @@ jobs:
 
       - name: Get Sanitized Branch Name for Workspace
         id: sanitize
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          # Sanitize branch name (keep alphanumeric, hyphen, truncate) and prefix
-          BRANCH_NAME=$(echo "${{ github.head_ref }}" | sed 's/[^a-zA-Z0-9-]/-/g' | cut -c1-63)
+          # Sanitize branch name (keep alphanumeric, hyphen, truncate) and prefix.
+          # HEAD_REF is an environment variable so the branch name is not shell-expanded.
+          BRANCH_NAME=$(printf '%s' "$HEAD_REF" | sed 's/[^a-zA-Z0-9-]/-/g' | cut -c1-63)
           WORKSPACE_NAME="preview-${BRANCH_NAME}"
-          echo "WORKSPACE_NAME=${WORKSPACE_NAME}" >> $GITHUB_OUTPUT
+          echo "WORKSPACE_NAME=${WORKSPACE_NAME}" >> "$GITHUB_OUTPUT"
           echo "Sanitized workspace name: ${WORKSPACE_NAME}"
 
       - name: Terraform Workspace Select or New (Preview)
         id: workspace-preview
-        # Use the sanitized branch name for the workspace
         run: |
-          terraform workspace select ${{ steps.sanitize.outputs.WORKSPACE_NAME }} || terraform workspace new ${{ steps.sanitize.outputs.WORKSPACE_NAME }}
+          terraform workspace select "$WORKSPACE_NAME" || terraform workspace new "$WORKSPACE_NAME"
         working-directory: ./terraform
         env:
-           AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+          WORKSPACE_NAME: ${{ steps.sanitize.outputs.WORKSPACE_NAME }}
+          AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
 
       - name: Terraform Plan (Preview)
         id: plan-preview
@@ -121,13 +124,8 @@ jobs:
            AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
            # TF_LOG: DEBUG # Uncomment for debugging Terraform issues
 
-      # Add Apply Step
-      - name: Terraform Apply (Preview)
-        id: apply-preview
-        run: terraform apply -auto-approve tfplan
-        working-directory: ./terraform
-        env:
-           AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+      # Pull requests plan only. Applying from an unreviewed workflow can create or
+      # change AWS resources, including IAM, Lambda, and DynamoDB.
 
       # Optional: Add step here to comment plan output or apply status on the PR
       # using actions like github-script or peter-evans/create-or-update-comment
@@ -140,19 +138,19 @@ jobs:
   deploy-prod:
     name: Deploy Backend (Production)
     # Only run this job for pushes to master or manual triggers
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Node.js and PNPM
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '20' # Match Lambda runtime or desired version
       - name: Setup PNPM
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.4.0
         with:
           version: 10 # Match local/required pnpm version
           run_install: false
@@ -164,7 +162,7 @@ jobs:
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
 
       - name: Setup pnpm cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -180,14 +178,14 @@ jobs:
         working-directory: ./lambda_src
 
       - name: Configure AWS Credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           # Same role assumption as staging, ensure it has prod permissions
           role-to-assume: ${{ secrets.TERRAFORM_AWS_IAM_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION || 'us-west-2' }} # Use repo variable or default
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_version: ~1.8 # Use your desired Terraform version constraint
 
@@ -226,36 +224,36 @@ jobs:
     if: >
       github.event_name == 'delete' &&
       github.event.ref_type == 'branch' &&
-      github.event.ref != 'refs/heads/master'
+      github.event.ref != 'master'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       # No need to build Lambda for destroy
 
       - name: Configure AWS Credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           # Role needs destroy permissions for all managed resources
           role-to-assume: ${{ secrets.TERRAFORM_AWS_IAM_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION || 'us-west-2' }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_version: ~1.8
 
       - name: Get Sanitized Deleted Branch Name for Workspace
         id: sanitize-deleted
+        env:
+          DELETED_REF: ${{ github.event.ref }}
         run: |
-          # github.event.ref is like 'refs/heads/branch-name'
-          # Use same sanitization logic as in plan-staging job
-          BRANCH_NAME=$(echo "${{ github.event.ref }}" | sed 's#refs/heads/##' | sed 's/[^a-zA-Z0-9-]/-/g' | cut -c1-63)
+          # delete events set github.event.ref to the branch name, not refs/heads/<name>
+          BRANCH_NAME=$(printf '%s' "$DELETED_REF" | sed 's#refs/heads/##' | sed 's/[^a-zA-Z0-9-]/-/g' | cut -c1-63)
           WORKSPACE_NAME="preview-${BRANCH_NAME}"
-          echo "WORKSPACE_NAME=${WORKSPACE_NAME}" >> $GITHUB_OUTPUT
-          echo "Deleted branch ref: ${{ github.event.ref }}"
+          echo "WORKSPACE_NAME=${WORKSPACE_NAME}" >> "$GITHUB_OUTPUT"
           echo "Sanitized workspace name to clean: ${WORKSPACE_NAME}"
 
       - name: Terraform Init (Cleanup)
@@ -268,9 +266,10 @@ jobs:
       - name: Terraform Workspace Select (Cleanup)
         id: workspace-cleanup-select
         # Select the workspace corresponding to the deleted branch
-        run: terraform workspace select ${{ steps.sanitize-deleted.outputs.WORKSPACE_NAME }}
+        run: terraform workspace select "$WORKSPACE_NAME"
         working-directory: ./terraform
         env:
+          WORKSPACE_NAME: ${{ steps.sanitize-deleted.outputs.WORKSPACE_NAME }}
           AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
         # Fail fast if workspace doesn't exist (implies nothing to destroy)
 
@@ -295,9 +294,10 @@ jobs:
       - name: Terraform Workspace Delete (Cleanup)
         id: workspace-cleanup-delete
         # Delete the preview workspace itself
-        run: terraform workspace delete ${{ steps.sanitize-deleted.outputs.WORKSPACE_NAME }}
+        run: terraform workspace delete "$WORKSPACE_NAME"
         working-directory: ./terraform
         env:
+          WORKSPACE_NAME: ${{ steps.sanitize-deleted.outputs.WORKSPACE_NAME }}
           AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
         # Always run even if destroy failed/workspace select failed, to attempt cleanup
         if: always() 

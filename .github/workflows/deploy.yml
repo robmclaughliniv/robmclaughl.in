@@ -13,10 +13,9 @@ on:
       - '!master' # Indented under branches - Exclude master branch from delete trigger
   workflow_dispatch: # Allow manual trigger for production
 
+# Job permissions below replace this default.
 permissions:
-  id-token: write   # Required for AWS OIDC
-  contents: read    # Required for checkout
-  pull-requests: write # Required for writing PR comments
+  contents: read
 
 # Use concurrency groups to cancel older runs for the same branch/PR
 concurrency:
@@ -32,18 +31,21 @@ jobs:
     if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: prod # Assumes 'prod' environment exists for production secrets/approvals if needed
+    permissions:
+      contents: read
+      id-token: write # Required for AWS OIDC
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup pnpm
         # Ensure this version matches your project's lock file
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.4.0
         with:
           version: 10.7.1 # Match local pnpm version
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '18' # Or your project's Node version
           cache: 'pnpm'
@@ -56,12 +58,11 @@ jobs:
         run: pnpm run build
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }} # Use Repository Secret
           aws-region: us-west-2 # Replace with your AWS region
           role-session-name: rob-site-prod-deploy
-          mask-aws-account-id: 'no'
 
       - name: Deploy Production to S3
         run: |
@@ -85,20 +86,24 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     # No environment specified, uses Repository Secrets
+    permissions:
+      contents: read
+      id-token: write # Required for AWS OIDC
+      pull-requests: write # Required for writing PR comments
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         # Fetch depth 0 is important for potentially checking previous comments if needed
         with:
           fetch-depth: 0
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.4.0
         with:
           version: 10.7.1 # Match local pnpm version
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '18'
           cache: 'pnpm'
@@ -108,16 +113,16 @@ jobs:
 
       - name: Get Branch Name and Sanitize
         id: get_branch
+        env:
+          # Passed as an environment variable so a branch name cannot break out of the script.
+          BRANCH_NAME: ${{ github.head_ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          # For PR events, the branch name is in github.head_ref
-          BRANCH_NAME="${{ github.head_ref }}"
-          # Sanitize: Replace non-alphanumeric (excluding '-') with '-', remove leading/trailing '-', lowercase, truncate
-          BRANCH_SLUG=$(echo "$BRANCH_NAME" | sed -e 's/[^a-zA-Z0-9-]/-/g' -e 's/^-*//' -e 's/-*$//' | tr '[:upper:]' '[:lower:]' | cut -c 1-63)
-          # Ensure slug is not empty after sanitization
+          BRANCH_SLUG=$(printf '%s' "$BRANCH_NAME" | sed -e 's/[^a-zA-Z0-9-]/-/g' -e 's/^-*//' -e 's/-*$//' | tr '[:upper:]' '[:lower:]' | cut -c 1-63)
           if [ -z "$BRANCH_SLUG" ]; then
-            BRANCH_SLUG="pr-${{ github.event.pull_request.number }}"
+            BRANCH_SLUG="pr-${PR_NUMBER}"
           fi
-          echo "BRANCH_SLUG=$BRANCH_SLUG" >> $GITHUB_OUTPUT
+          echo "BRANCH_SLUG=$BRANCH_SLUG" >> "$GITHUB_OUTPUT"
           echo "Preview Branch Slug: $BRANCH_SLUG"
 
       - name: Build Preview
@@ -127,12 +132,11 @@ jobs:
         run: pnpm run build
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }} # Use Repository Secret
           aws-region: us-west-2 # Replace with your AWS region
           role-session-name: rob-site-preview-deploy
-          mask-aws-account-id: 'no'
 
       - name: Deploy Preview to S3
         run: |
@@ -146,7 +150,7 @@ jobs:
         run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}/*" # Use Repository Secret
 
       - name: Post Preview URL to PR
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
@@ -167,34 +171,33 @@ jobs:
   # ----- Preview Cleanup Job -----
   # -----------------------------------
   cleanup-preview:
-    # Trigger ONLY on branch deletion events (for non-master branches)
-    if: github.event_name == 'delete' && github.ref != 'refs/heads/master'
+    # delete events report github.ref as the default branch, so compare the deleted ref itself.
+    if: github.event_name == 'delete' && github.event.ref_type == 'branch' && github.event.ref != 'master'
     runs-on: ubuntu-latest
-    # No environment specified, uses Repository Secrets
+    permissions:
+      contents: read
+      id-token: write # Required for AWS OIDC
     steps:
       - name: Get Deleted Branch Name and Sanitize
         id: get_branch
+        env:
+          DELETED_REF: ${{ github.event.ref }}
         run: |
-          # For delete events, the branch name is in github.ref (e.g., refs/heads/feature/branch)
-          BRANCH_NAME="${{ github.ref }}"
-          BRANCH_NAME=${BRANCH_NAME#refs/heads/}
-          # Sanitize the same way as in deploy-preview
-          BRANCH_SLUG=$(echo "$BRANCH_NAME" | sed -e 's/[^a-zA-Z0-9-]/-/g' -e 's/^-*//' -e 's/-*$//' | tr '[:upper:]' '[:lower:]' | cut -c 1-63)
+          BRANCH_NAME="${DELETED_REF#refs/heads/}"
+          BRANCH_SLUG=$(printf '%s' "$BRANCH_NAME" | sed -e 's/[^a-zA-Z0-9-]/-/g' -e 's/^-*//' -e 's/-*$//' | tr '[:upper:]' '[:lower:]' | cut -c 1-63)
           if [ -z "$BRANCH_SLUG" ]; then
-            # This case is less likely for delete, but handle defensively
-            echo "::error::Could not determine a valid slug for deleted branch ref: ${{ github.ref }}"
+            echo "::error::Could not determine a valid slug for deleted branch ref"
             exit 1
           fi
-          echo "BRANCH_SLUG=$BRANCH_SLUG" >> $GITHUB_OUTPUT
+          echo "BRANCH_SLUG=$BRANCH_SLUG" >> "$GITHUB_OUTPUT"
           echo "Cleaning up Branch Slug: $BRANCH_SLUG"
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }} # Use Repository Secret
           aws-region: us-west-2 # Replace with your AWS region
           role-session-name: rob-site-preview-cleanup
-          mask-aws-account-id: 'no'
 
       - name: Remove Preview from S3
         run: aws s3 rm s3://${{ secrets.AWS_S3_BUCKET_NAME }}/branch/${{ steps.get_branch.outputs.BRANCH_SLUG }}/ --recursive # Use Repository Secret
