@@ -68,6 +68,13 @@ aws s3 sync public/channels/study-chill/mobile/ \
 aws cloudfront create-invalidation --distribution-id <DIST_ID> --paths "/channels/*"
 ```
 
+`scripts/upload-channel-media.sh` runs the three per-channel syncs above. It dry-runs unless you pass `--apply`. Manifest JSON still deploys with the site. After `--apply`, run the invalidation above if CloudFront is still serving a cached error.
+
+```bash
+./scripts/upload-channel-media.sh --bucket "$BUCKET" --channel study-chill
+./scripts/upload-channel-media.sh --bucket "$BUCKET" --channel study-chill --apply
+```
+
 ## User Controls
 
 - **Channel up/down** — buttons in the expanded audio player (disabled when only one channel exists)
