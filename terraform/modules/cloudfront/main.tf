@@ -1,7 +1,7 @@
 # Keep the existing Origin Access Identity (OAI) to prevent deletion errors
 resource "aws_cloudfront_origin_access_identity" "oai" {
   comment = "OAI for ${var.bucket_name} (preserved for migration)"
-  
+
   # Prevent Terraform from trying to delete this resource
   lifecycle {
     prevent_destroy = true
@@ -11,7 +11,7 @@ resource "aws_cloudfront_origin_access_identity" "oai" {
 # Create a Response Headers Policy for security headers
 resource "aws_cloudfront_response_headers_policy" "security_headers" {
   name = "security-headers-policy"
-  
+
   security_headers_config {
     # Strict Transport Security: Enforce HTTPS
     strict_transport_security {
@@ -20,35 +20,54 @@ resource "aws_cloudfront_response_headers_policy" "security_headers" {
       preload                    = true
       override                   = true
     }
-    
+
     # Content-Security-Policy: Restrict sources of content
     content_security_policy {
       content_security_policy = "default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; media-src 'self'; object-src 'none'; frame-src 'none';"
       override                = true
     }
-    
+
     # X-Content-Type-Options: Prevent MIME type sniffing
     content_type_options {
       override = true
     }
-    
+
     # X-Frame-Options: Prevent clickjacking
     frame_options {
       frame_option = "DENY"
       override     = true
     }
-    
+
     # Referrer-Policy: Control referrer information
     referrer_policy {
       referrer_policy = "strict-origin-when-cross-origin"
       override        = true
     }
-    
+
     # X-XSS-Protection: Legacy XSS protection for older browsers
     xss_protection {
       mode_block = true
       protection = true
       override   = true
+    }
+  }
+
+  # Permissions-Policy is not one of CloudFront's built-in security headers.
+  # Deny device, sensor, and payment APIs this static site does not call.
+  # autoplay stays at the browser default because the hero video uses autoPlay.
+  custom_headers_config {
+    items {
+      header   = "Permissions-Policy"
+      override = true
+      value    = "accelerometer=(), bluetooth=(), browsing-topics=(), camera=(), display-capture=(), document-domain=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), interest-cohort=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), xr-spatial-tracking=()"
+    }
+  }
+
+  # Drop the origin Server header (S3 sends AmazonS3). CloudFront then adds
+  # its own Server: CloudFront value on the viewer response.
+  remove_headers_config {
+    items {
+      header = "Server"
     }
   }
 }
@@ -69,7 +88,7 @@ resource "aws_cloudfront_function" "index_rewrite" {
   runtime = "cloudfront-js-1.0"
   comment = "Rewrites directory requests to index.html"
   publish = true
-  code = <<EOF
+  code    = <<EOF
 function handler(event) {
     var request = event.request;
     var uri = request.uri;
@@ -94,7 +113,7 @@ resource "aws_cloudfront_distribution" "website" {
     domain_name              = var.bucket_regional_domain_name
     origin_id                = "S3-${var.bucket_name}"
     origin_access_control_id = aws_cloudfront_origin_access_control.oac.id # Use OAC instead of OAI
-    
+
     # Note: We're not using s3_origin_config with OAI anymore, but keeping the OAI resource
     # to prevent deletion errors during migration
   }
@@ -154,7 +173,7 @@ resource "aws_cloudfront_distribution" "website" {
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
-    
+
     # Apply the security headers policy
     response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
 
