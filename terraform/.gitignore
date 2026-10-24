@@ -25,3 +25,6 @@ terraform.rc
 
 # Ignore .terraform.lock.hcl file
 .terraform.lock.hcl
+
+# State snapshots checked in by hand. They are an infrastructure inventory.
+*-state-backup-*.json
