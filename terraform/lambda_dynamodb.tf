@@ -9,7 +9,17 @@ locals {
     Environment = local.environment
     ManagedBy   = "Terraform"
   }
-  resource_prefix = "${var.project_name}-${local.environment}"
+  # IAM role names are limited to 64 characters. The longest suffix on this
+  # prefix is "-lambda-exec-role" (17), so the prefix must stay at or under 47.
+  # Production and short preview workspaces keep the readable name. A longer
+  # preview workspace keeps a 38-character stem plus a hash of the full name
+  # so two branches that share a long prefix do not collide.
+  raw_resource_prefix = "${var.project_name}-${local.environment}"
+  resource_prefix = (
+    length(local.raw_resource_prefix) <= 47
+    ? local.raw_resource_prefix
+    : "${substr(local.raw_resource_prefix, 0, 38)}-${substr(sha256(local.raw_resource_prefix), 0, 8)}"
+  )
 }
 
 # ------------------------------------------------------------
