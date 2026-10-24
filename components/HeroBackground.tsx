@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useLayoutEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { useSyncedBackgrounds } from '@/hooks/use-synced-backgrounds';
 import { useChannelContext } from '@/components/channels/ChannelContext';
@@ -41,6 +41,11 @@ const HeroBackgroundInner = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const desktopVideoRef = useRef<HTMLVideoElement>(null);
   const mobileVideoRef = useRef<HTMLVideoElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    overlayRef.current?.style.setProperty('--crt-overlay-color', overlayColor);
+  }, [overlayColor]);
 
   const resolvedMobileImage = activeMobileImageSrc ?? mobileBackgroundImage;
   const resolvedMobilePoster = activeMobilePosterSrc ?? resolvedMobileImage;
@@ -159,13 +164,11 @@ const HeroBackgroundInner = ({
       role="presentation"
     >
       <div className="crt-jitter absolute inset-0 w-full h-full" aria-hidden="true">
-        <div
-          className={staticBackgroundClass}
-          style={{
-            backgroundImage: `url(${showStaticOnMobile ? resolvedMobileImage : resolvedMobilePoster})`,
-          }}
-          role="img"
-          aria-label="Background image"
+        <img
+          src={showStaticOnMobile ? resolvedMobileImage : resolvedMobilePoster}
+          alt=""
+          className={cn(staticBackgroundClass, 'object-cover')}
+          aria-hidden="true"
         />
 
         {showMobileVideo && activeMobileVideoSrc && (
@@ -208,23 +211,18 @@ const HeroBackgroundInner = ({
       </div>
 
       <div
+        ref={overlayRef}
         className={cn(
-          'absolute inset-0 z-[1] transition-[opacity,background-color] duration-1000 ease-in-out',
+          'crt-overlay absolute inset-0 z-[1] transition-[opacity,background-color] duration-1000 ease-in-out',
           isVisible ? 'opacity-100' : 'opacity-0'
         )}
-        style={{ backgroundColor: overlayColor }}
       />
 
       <div
         className={cn(
-          'absolute inset-0 z-[2] opacity-0 transition-opacity duration-1500 ease-in-out',
+          'crt-noise absolute inset-0 z-[2] opacity-0 transition-opacity duration-1500 ease-in-out',
           isVisible ? 'opacity-[0.14]' : 'opacity-0'
         )}
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-          backgroundRepeat: 'repeat',
-          transitionDelay: '200ms',
-        }}
         aria-hidden="true"
       />
 
@@ -235,13 +233,9 @@ const HeroBackgroundInner = ({
 
       <div
         className={cn(
-          'absolute inset-0 z-[3] pointer-events-none',
+          'crt-inset-shade absolute inset-0 z-[3] pointer-events-none',
           isVisible ? 'opacity-100' : 'opacity-0'
         )}
-        style={{
-          boxShadow: '0 0 150px rgba(0, 0, 0, .01) inset',
-          transitionDelay: '400ms',
-        }}
         aria-hidden="true"
       />
 

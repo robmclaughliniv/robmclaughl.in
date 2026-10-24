@@ -252,8 +252,8 @@ Implement CSP headers via CloudFront custom headers or Lambda@Edge:
 ```
 Content-Security-Policy:
   default-src 'self';
-  script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com;
-  style-src 'self' 'unsafe-inline';
+  script-src 'self' https://challenges.cloudflare.com;
+  style-src 'self';
   img-src 'self' data: https: blob:;
   media-src 'self' https: blob:;
   connect-src 'self' https://api.openai.com https://challenges.cloudflare.com;

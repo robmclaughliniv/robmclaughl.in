@@ -119,7 +119,7 @@ graph TD
 *   **Framework Choice (Next.js):** Chosen for performance (SSR/SSG), SEO benefits, TypeScript support, and React ecosystem. App Router used for modern features.
 *   **Backend Choice (Lambda + DynamoDB + API Gateway):** Added API Gateway HTTP API as the trigger mechanism for the Lambda function.
 *   **Styling (Tailwind CSS + shadcn/ui):** Utility-first CSS for rapid development and custom styling. Shadcn/ui provides accessible, pre-built components compatible with Tailwind.
-*   **Hosting (AWS S3 + CloudFront):** Provides scalable, secure, and performant static site hosting with global CDN delivery, HTTPS, security headers (including CSP requiring `script-src 'unsafe-inline'` for Next.js compatibility), and access logging.
+*   **Hosting (AWS S3 + CloudFront):** Provides scalable, secure, and performant static site hosting with global CDN delivery, HTTPS, security headers (CSP `script-src 'self'` and `style-src 'self'`; the production build moves Next.js inline scripts into same-origin files), and access logging.
 *   **Security (AWS WAF + IAM + OIDC):** Added OIDC for GitHub Actions backend workflow authentication. Acknowledged need to refine permissions for the OIDC role.
 *   **CloudFront Functions:** Using a lightweight edge function (`index_rewrite`) to handle URI rewrites (appending `index.html`) for specific subdirectory path patterns.
 *   **Infrastructure as Code (Terraform):** Now manages API Gateway resources as well. Uses `dev` and `prod` workspaces.

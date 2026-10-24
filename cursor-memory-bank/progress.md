@@ -121,6 +121,7 @@
 *   The `script-src 'self'` directive was blocking essential inline scripts used by Next.js for hydration and functionality.
 *   The issue was resolved by modifying the CSP in Terraform (`terraform/modules/cloudfront/main.tf`) to include `'unsafe-inline'` in the `script-src` directive (`script-src 'self' 'unsafe-inline';`).
 *   This allows the site to function correctly but represents a trade-off, reducing protection against potential XSS attacks involving inline scripts.
+*   **Update:** `'unsafe-inline'` was removed from both `script-src` and `style-src`. `scripts/externalize-inline-scripts.mjs` rewrites inline scripts (and any inline style blocks) into `/_next/static/csp/` during `pnpm build`, which stays valid across deploys because the CloudFront header is not rewritten per build. Static `style` attributes were moved into stylesheets; dynamic color is applied through the CSSOM.
 
 ## Recent Security Improvements (April 4, 2025)
 
