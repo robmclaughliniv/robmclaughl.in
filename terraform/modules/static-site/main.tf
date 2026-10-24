@@ -20,7 +20,13 @@ locals {
   s3_origin_id  = "S3-${local.bucket_name}"
   api_origin_id = "APIGW-${local.name_prefix}"
 
-  oidc_subjects = var.allowed_oidc_subjects != null ? var.allowed_oidc_subjects : ["repo:${var.repo}:*"]
+  # Push and workflow_dispatch on the default branch, with no job environment.
+  # main and master are both listed so either default-branch convention matches
+  # without a repo-wide wildcard. Override with allowed_oidc_subjects.
+  oidc_subjects = var.allowed_oidc_subjects != null ? var.allowed_oidc_subjects : [
+    "repo:${var.repo}:ref:refs/heads/main",
+    "repo:${var.repo}:ref:refs/heads/master",
+  ]
 
   # Reuse the shared response-headers policy unless a CSP override forces a
   # per-app policy.

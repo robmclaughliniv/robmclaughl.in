@@ -40,7 +40,7 @@ variable "repo" {
 }
 
 variable "allowed_oidc_subjects" {
-  description = "Optional explicit list of GitHub OIDC `sub` claims allowed to assume the deploy role. When null, defaults to [\"repo:<repo>:*\"]. Tighten to e.g. [\"repo:<repo>:ref:refs/heads/master\"] for least privilege."
+  description = "Optional explicit list of GitHub OIDC sub claims allowed to assume the deploy role. When null, defaults to exact refs/heads/main and refs/heads/master subjects (no repo-wide wildcard)."
   type        = list(string)
   default     = null
 }

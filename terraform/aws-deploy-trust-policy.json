@@ -9,10 +9,12 @@
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
         "StringEquals": {
-          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
-        },
-        "StringLike": {
-          "token.actions.githubusercontent.com:sub": "repo:robmclaughliniv/robmclaughl.in:*"
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+          "token.actions.githubusercontent.com:sub": [
+            "repo:robmclaughliniv/robmclaughl.in:environment:prod",
+            "repo:robmclaughliniv/robmclaughl.in:pull_request",
+            "repo:robmclaughliniv/robmclaughl.in:ref:refs/heads/master"
+          ]
         }
       }
     }

@@ -82,7 +82,7 @@ module "site" {
 | `app_name` | — | App name (tags + naming fallback). |
 | `subdomain` | `""` | Single label => subdomain mode. Empty => apex + www (root mode). |
 | `repo` | — | `owner/name` for the OIDC trust. |
-| `allowed_oidc_subjects` | `["repo:<repo>:*"]` | Tighten to specific branches for least privilege. |
+| `allowed_oidc_subjects` | `refs/heads/main` and `refs/heads/master` | Exact OIDC `sub` list. Override when a repo needs different subjects. |
 | `spa_mode` | `false` | `true` for SPA fallback (403/404 -> index.html 200). |
 | `csp_override` | `null` | Per-app Content-Security-Policy (otherwise reuses shared policy). |
 | `enable_api` | `false` | Provision Lambda + HTTP API behind `/api/*`. |

@@ -31,8 +31,9 @@ point an app at the root key (`terraform.tfstate`) or share a key between apps.
 
 - The per-app GitHub Actions role is scoped to *that app's* bucket, distribution,
   and (if present) Lambda — never `*` resources.
-- Tighten `allowed_oidc_subjects` to specific branches once the deploy flow is
-  proven, e.g. `["repo:<owner>/<repo>:ref:refs/heads/master"]`.
+- The deploy role trusts only `repo:<owner>/<repo>:ref:refs/heads/main` and
+  `repo:<owner>/<repo>:ref:refs/heads/master` unless `allowed_oidc_subjects`
+  passes a different exact list. Do not put a repo-wide wildcard back.
 
 ## Preserve security posture
 
