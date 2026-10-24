@@ -67,7 +67,6 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
       className={`${inter.variable} ${spaceMono.variable} ${pressStart2P.variable} dark`}
-      style={{ colorScheme: "dark" }}
     >
       <body className="font-sans bg-background text-foreground antialiased">
         <a

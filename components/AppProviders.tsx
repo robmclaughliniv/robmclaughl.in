@@ -10,8 +10,9 @@ interface AppProvidersProps {
 }
 
 export const AppProviders = ({ children }: AppProvidersProps) => {
+  // disableTransitionOnChange injects a style element, which style-src 'self' blocks.
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
       <ChannelProvider>
         <AudioPlayerProvider>
           {children}
