@@ -17,10 +17,17 @@ on:
 permissions:
   contents: read
 
-# Use concurrency groups to cancel older runs for the same branch/PR
+# Delete events set github.ref to the default branch, so a branch-delete cleanup
+# used to join the deploy-prod group and cancel it. Key deletes by the deleted
+# branch (github.event.ref). Push and workflow_dispatch share github.ref and
+# queue. Only pull_request previews cancel an older run of the same PR.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: >-
+    ${{ case(
+      github.event_name == 'delete', format('{0}-delete-{1}', github.workflow, github.event.ref),
+      format('{0}-{1}', github.workflow, github.event.pull_request.number || github.ref)
+    ) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # -------------------------------------
