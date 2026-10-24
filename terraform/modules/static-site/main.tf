@@ -32,7 +32,14 @@ locals {
   # per-app policy.
   response_headers_policy_id = var.csp_override != null ? aws_cloudfront_response_headers_policy.override[0].id : data.aws_cloudfront_response_headers_policy.shared[0].id
 
+  # Keep in step with modules/cloudfront/main.tf. autoplay stays allowed.
+  # bluetooth and document-domain are omitted (Chrome reports them as unrecognized).
+  permissions_policy = "accelerometer=(), browsing-topics=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), interest-cohort=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), xr-spatial-tracking=()"
+
   # CloudFront custom error responses: SPA fallback vs static-export 404.
+  # S3 behind OAC returns 403 for a missing key, so the static-export path
+  # must map 403 as well as 404. spa_mode is unchanged (client routers still
+  # receive /index.html with HTTP 200).
   error_responses = var.spa_mode ? [
     {
       error_code            = 403
@@ -48,10 +55,16 @@ locals {
     },
     ] : [
     {
+      error_code            = 403
+      response_code         = 404
+      response_page_path    = "/404.html"
+      error_caching_min_ttl = 10
+    },
+    {
       error_code            = 404
       response_code         = 404
       response_page_path    = "/404.html"
-      error_caching_min_ttl = 0
+      error_caching_min_ttl = 10
     },
   ]
 

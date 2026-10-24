@@ -68,7 +68,7 @@ variable "enable_index_rewrite" {
 }
 
 variable "spa_mode" {
-  description = "When true, serve /index.html (HTTP 200) for 403/404 responses (single-page apps with client-side routing). When false, serve /404.html (HTTP 404) — appropriate for static-export sites."
+  description = "When true, serve /index.html (HTTP 200) for 403/404 responses (single-page apps with client-side routing). When false (default), serve /404.html with HTTP 404 for both 403 and 404. Static-export sites need the 403 mapping because S3 behind OAC returns 403 for missing keys. The default does not rewrite those responses to /index.html."
   type        = bool
   default     = false
 }

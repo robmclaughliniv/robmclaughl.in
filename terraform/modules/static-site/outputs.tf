@@ -1,3 +1,17 @@
+output "custom_error_responses" {
+  description = "Custom error responses on this distribution. spa_mode false maps origin 403 and 404 to /404.html with HTTP 404. spa_mode true maps both to /index.html with HTTP 200."
+  value       = local.error_responses
+}
+
+output "override_permissions_policy" {
+  description = "Permissions-Policy value on the per-app response-headers policy, or null when the shared policy is reused."
+  value = var.csp_override == null ? null : one(flatten([
+    for block in aws_cloudfront_response_headers_policy.override[0].custom_headers_config : [
+      for item in block.items : item.value if item.header == "Permissions-Policy"
+    ]
+  ]))
+}
+
 output "site_url" {
   description = "Public HTTPS URL of the deployed site."
   value       = "https://${local.fqdn}"
