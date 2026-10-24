@@ -55,11 +55,13 @@ resource "aws_cloudfront_response_headers_policy" "security_headers" {
   # Permissions-Policy is not one of CloudFront's built-in security headers.
   # Deny device, sensor, and payment APIs this static site does not call.
   # autoplay stays at the browser default because the hero video uses autoPlay.
+  # bluetooth and document-domain are omitted: current Chrome reports both as
+  # unrecognized Permissions-Policy features.
   custom_headers_config {
     items {
       header   = "Permissions-Policy"
       override = true
-      value    = "accelerometer=(), bluetooth=(), browsing-topics=(), camera=(), display-capture=(), document-domain=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), interest-cohort=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), xr-spatial-tracking=()"
+      value    = "accelerometer=(), browsing-topics=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), interest-cohort=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), xr-spatial-tracking=()"
     }
   }
 
@@ -180,11 +182,23 @@ resource "aws_cloudfront_distribution" "website" {
     # NO function association here
   }
 
-  # Handle 404 errors with custom error response
+  # S3 behind OAC returns 403 AccessDenied for a missing key (the bucket
+  # policy has no s3:ListBucket, so S3 will not send 404). Next.js
+  # `output: 'export'` writes app/not-found.tsx to out/404.html (trailingSlash
+  # is off, so this is not 404/index.html). Serve that page with a real 404.
+  # Do not fall back to /index.html with 200 — this site is not an SPA.
   custom_error_response {
-    error_code         = 404
-    response_code      = 404
-    response_page_path = "/404.html"
+    error_code            = 403
+    response_code         = 404
+    response_page_path    = "/404.html"
+    error_caching_min_ttl = 10
+  }
+
+  custom_error_response {
+    error_code            = 404
+    response_code         = 404
+    response_page_path    = "/404.html"
+    error_caching_min_ttl = 10
   }
 
   # SSL Certificate

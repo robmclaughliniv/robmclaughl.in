@@ -83,7 +83,7 @@ module "site" {
 | `subdomain` | `""` | Single label => subdomain mode. Empty => apex + www (root mode). |
 | `repo` | — | `owner/name` for the OIDC trust. |
 | `allowed_oidc_subjects` | `refs/heads/main` and `refs/heads/master` | Exact OIDC `sub` list. Override when a repo needs different subjects. |
-| `spa_mode` | `false` | `true` for SPA fallback (403/404 -> index.html 200). |
+| `spa_mode` | `false` | `true` for SPA fallback (403/404 -> index.html 200). `false` serves `/404.html` with HTTP 404 for both 403 and 404 (S3 + OAC missing keys are 403). |
 | `csp_override` | `null` | Per-app Content-Security-Policy (otherwise reuses shared policy). |
 | `enable_api` | `false` | Provision Lambda + HTTP API behind `/api/*`. |
 | `enable_dynamodb` | `false` | Add a PAY_PER_REQUEST table for the API Lambda. |
