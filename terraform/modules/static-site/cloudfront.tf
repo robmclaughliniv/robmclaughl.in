@@ -70,6 +70,21 @@ resource "aws_cloudfront_response_headers_policy" "override" {
       override   = true
     }
   }
+
+  # Keep in step with modules/cloudfront/main.tf. autoplay stays allowed.
+  custom_headers_config {
+    items {
+      header   = "Permissions-Policy"
+      override = true
+      value    = "accelerometer=(), bluetooth=(), browsing-topics=(), camera=(), display-capture=(), document-domain=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), interest-cohort=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), xr-spatial-tracking=()"
+    }
+  }
+
+  remove_headers_config {
+    items {
+      header = "Server"
+    }
+  }
 }
 
 resource "aws_cloudfront_distribution" "website" {
